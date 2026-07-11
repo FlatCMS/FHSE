@@ -474,6 +474,35 @@
       color: var(--muted);
     }
 
+    .technical-command-shell {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .technical-command-link {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      padding: 10px 12px;
+      color: #e0e7ff;
+      text-decoration: none;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .technical-command-link:hover {
+      border-color: rgba(79, 70, 229, 0.65);
+      background: rgba(79, 70, 229, 0.14);
+    }
+
+    .technical-command-link code {
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -755,6 +784,18 @@
             <div class="kv">
               <span>SSH par mot de passe</span>
               <span id="finalTechnicalSsh"></span>
+            </div>
+            <div class="kv">
+              <span>Commande SSH</span>
+              <span class="technical-command-shell">
+                <span class="muted-note">Votre serveur est accessible via un terminal avec cette commande :</span>
+                <span>
+                  <a id="finalTechnicalSshLink" class="technical-command-link" href="#" rel="noreferrer">
+                    <code id="finalTechnicalCommand" class="mono"></code>
+                  </a>
+                  <button class="copy secondary" onclick="copyText(event, 'finalTechnicalCommand')">Copier</button>
+                </span>
+              </span>
             </div>
             <div class="kv">
               <span>Mot de passe</span>
@@ -1129,6 +1170,9 @@ function renderFinal() {
   }
 
   const configuration = statusPayload.configuration || {};
+  const technicalUser = configuration.technical_access_user || 'admin';
+  const technicalCommand = `ssh ${technicalUser}@fhse.local`;
+  const technicalLink = byId('finalTechnicalSshLink');
 
   byId('finalFlatcms').href = configuration.flatcms_url || '#';
   byId('finalPanel').href = configuration.aapanel_url || '#';
@@ -1139,11 +1183,16 @@ function renderFinal() {
   setCopyValue('finalPanelUrl', configuration.aapanel_url);
   setCopyValue('finalPanelUser', configuration.aapanel_username);
   setCopyValue('finalPanelPass', configuration.aapanel_password);
-  setCopyValue('finalTechnicalUser', configuration.technical_access_user);
+  setCopyValue('finalTechnicalUser', technicalUser);
+  setCopyValue('finalTechnicalCommand', technicalCommand);
 
   byId('finalTechnicalSsh').textContent = configuration.ssh_password_auth_enabled
     ? 'Activé'
     : 'Désactivé';
+  if (technicalLink) {
+    technicalLink.href = `ssh://${technicalUser}@fhse.local`;
+    technicalLink.title = 'Ouvrir cette connexion SSH';
+  }
   byId('finalTechnicalNote').textContent = configuration.technical_access_ready
     ? 'Mot de passe déjà défini dans le wizard FHSE. Il n’est jamais réaffiché à l’écran.'
     : 'Mot de passe non configuré. Relancez le wizard FHSE pour l’appliquer.';
