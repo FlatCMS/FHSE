@@ -8,4 +8,7 @@ tmp/
 *.ova
 *.vdi
 *.vmdk
-
+*.box
+*.raw
+*.tar.zst
+*.tar.xz

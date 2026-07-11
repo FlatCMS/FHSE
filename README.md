@@ -10,6 +10,14 @@ This repository is intended to host the platform-specific builders, deployment a
   - first tracked target
   - Raspberry Pi 4 / 400 appliance builder
   - release notes and checksums for the latest validated Raspberry image
+- `PC/`
+  - future x86_64 installer target
+  - ISO-oriented deployment flow for mini PCs, NUCs, and legacy PCs
+- `VM/`
+  - future virtual appliance target
+  - VM-oriented outputs such as qcow2, ova, and preconfigured appliances
+- `docs/`
+  - shared architecture and target contracts
 
 ## Repository policy
 
@@ -30,9 +38,21 @@ The first committed target is:
 
 ## Next target families
 
-Planned future folders:
+Planned target families:
 
 - `PC/`
 - `VM/`
 - `NAS/`
 
+## Product direction
+
+FHSE is evolving toward a multi-target deployment platform able to deliver FlatCMS with the same no-terminal user promise across:
+
+- Raspberry Pi
+- mini PCs / NUCs
+- legacy PCs
+- virtual machines
+- existing Linux servers
+- NAS platforms later
+
+The repository therefore keeps one shared product direction while splitting platform-specific builders per target.
