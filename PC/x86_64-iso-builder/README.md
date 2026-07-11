@@ -33,3 +33,8 @@ The first milestone for this builder should be a documented skeleton with:
 - storage layout assumptions
 - release output naming
 
+## Current helper
+
+This target can already prepare the shared FHSE bundle archive through:
+
+- `tools/prepare-fhse-core-bundle.sh`

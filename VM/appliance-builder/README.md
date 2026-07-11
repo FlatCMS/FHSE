@@ -25,3 +25,9 @@ The VM target should reuse the shared FHSE installation logic while packaging it
 - aaPanel installs correctly
 - FlatCMS is available at the end of the workflow
 
+## Current helper
+
+This target can already prepare the shared FHSE bundle archive through:
+
+- `tools/prepare-fhse-core-bundle.sh`
+

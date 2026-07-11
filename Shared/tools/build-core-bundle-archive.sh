@@ -34,19 +34,18 @@ STAGE_DIR="$TMP_DIR/flatcms-home-server-bundle-v0.18.2"
 mkdir -p "$TMP_DIR"
 
 rsync -a --exclude '.DS_Store' "$CORE_DIR/" "$STAGE_DIR/"
-mkdir -p "$STAGE_DIR/packages"
-cp "$PAYLOAD_PATH" "$STAGE_DIR/packages/flatcms.zip"
+cp -p "$PAYLOAD_PATH" "$STAGE_DIR/packages/flatcms.zip"
+touch -r "$CORE_DIR/packages" "$STAGE_DIR/packages"
 
 mkdir -p "$(dirname "$OUTPUT_PATH")"
 rm -f "$OUTPUT_PATH"
 
 (
   cd "$TMP_DIR"
-  zip -qr "$OUTPUT_PATH" "flatcms-home-server-bundle-v0.18.2"
+  LC_ALL=C find "flatcms-home-server-bundle-v0.18.2" -print | sort | zip -Xq "$OUTPUT_PATH" -@
 )
 
 echo "Built bundle archive:"
 echo "  $OUTPUT_PATH"
 echo "Using payload:"
 echo "  $PAYLOAD_PATH"
-
