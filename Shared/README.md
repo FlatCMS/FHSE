@@ -37,6 +37,7 @@ The shared source is intentionally kept lightweight:
 
 - source files are tracked in `Shared/core-bundle-source/`
 - the heavy `flatcms.zip` payload stays in the target builders
+- packaging helpers live in `Shared/tools/`
 
 ## Next step
 
