@@ -1,0 +1,18 @@
+#cloud-config
+autoinstall:
+  version: 1
+  identity:
+    hostname: __FHSE_HOSTNAME__
+    username: __FHSE_USERNAME__
+    password: "__FHSE_PASSWORD_HASH__"
+  ssh:
+    install-server: true
+    allow-pw: false
+  packages:
+    - curl
+    - unzip
+    - rsync
+    - xz-utils
+  late-commands:
+    - echo "FHSE PC autoinstall skeleton ready"
+

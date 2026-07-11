@@ -31,3 +31,6 @@ This target can already prepare the shared FHSE bundle archive through:
 
 - `tools/prepare-fhse-core-bundle.sh`
 
+It can also stage the first local VM workspace skeleton through:
+
+- `tools/stage-workspace.sh`

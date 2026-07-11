@@ -1,0 +1,17 @@
+#cloud-config
+hostname: __FHSE_HOSTNAME__
+manage_etc_hosts: true
+users:
+  - name: __FHSE_USERNAME__
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: true
+ssh_pwauth: false
+packages:
+  - curl
+  - unzip
+  - rsync
+  - xz-utils
+runcmd:
+  - echo "FHSE VM cloud-init skeleton ready"
+

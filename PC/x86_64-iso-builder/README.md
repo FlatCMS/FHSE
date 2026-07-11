@@ -38,3 +38,7 @@ The first milestone for this builder should be a documented skeleton with:
 This target can already prepare the shared FHSE bundle archive through:
 
 - `tools/prepare-fhse-core-bundle.sh`
+
+It can also stage the first local ISO workspace skeleton through:
+
+- `tools/stage-workspace.sh`
