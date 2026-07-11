@@ -64,6 +64,7 @@ Expected role:
 - declare that FHSE is present
 - expose supported server-side features
 - tell FlatCMS whether Cloudflare Tunnel is available, configured, and active
+- tell FlatCMS whether the managed FlatCMS instance is still validly detected
 
 ## Local orchestration API
 
@@ -84,6 +85,10 @@ Expected first endpoints:
 - tunnel enable
 - tunnel disable
 - tunnel restart
+
+See also:
+
+- `docs/flatcms-instance-guard-contract.md`
 
 ## FlatCMS UI placement
 
@@ -113,6 +118,7 @@ Move the real publication workflow into FlatCMS and progressively reduce the FHS
 - local-first installation
 - optional informational hints about later publication
 - no primary Tunnel setup UX in the appliance wizard
+- publication blocked if FlatCMS is no longer detected in the managed webroot
 
 ## Testing priority
 
@@ -128,4 +134,3 @@ x86_64 VM validation remains useful later on:
 - VirtualBox
 - VMware
 - KVM / Proxmox
-
