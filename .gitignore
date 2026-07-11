@@ -1,0 +1,11 @@
+.DS_Store
+dist/
+tmp/
+*.img
+*.img.xz
+*.iso
+*.qcow2
+*.ova
+*.vdi
+*.vmdk
+

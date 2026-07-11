@@ -1,0 +1,47 @@
+#cloud-config
+hostname: fhse
+fqdn: fhse.local
+manage_etc_hosts: true
+
+# Force local NoCloud datasource when kernel cmdline also declares ds=nocloud.
+datasource_list: [ NoCloud, None ]
+
+users:
+  - default
+  - name: admin
+    gecos: FlatCMS Home Server Edition Admin
+    groups: [adm, sudo]
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    lock_passwd: true
+
+ssh_pwauth: false
+disable_root: true
+
+growpart:
+  mode: auto
+  devices: ['/']
+  ignore_growroot_disabled: false
+resize_rootfs: true
+
+package_update: false
+package_upgrade: false
+
+bootcmd:
+  - [ bash, -lc, 'echo "[FHSE] cloud-init bootcmd reached $(date -Is)" >> /var/log/fhse-cloud-init-bootcmd.log' ]
+  - [ bash, -lc, 'ssh-keygen -A || true' ]
+  - [ bash, -lc, 'systemctl unmask ssh || true' ]
+  - [ bash, -lc, 'systemctl enable ssh || true' ]
+
+write_files:
+  - path: /usr/local/sbin/fhse-firstboot.sh
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/usr/bin/env bash
+      exec /bin/bash /boot/firmware/fhse/fhse-firstboot.sh "$@"
+
+runcmd:
+  - [ bash, -lc, '/usr/local/sbin/fhse-firstboot.sh >> /var/log/fhse-cloud-init.log 2>&1' ]
+
+final_message: "FlatCMS Home Server Edition bootstrap termine. Ouvrez http://fhse.local:8080 ou http://IP_DU_RASPBERRY:8080."
