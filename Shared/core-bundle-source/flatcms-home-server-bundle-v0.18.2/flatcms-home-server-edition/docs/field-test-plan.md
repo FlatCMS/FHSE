@@ -6,6 +6,8 @@ Start with the Intel NUC or the old Intel Celeron PC using an existing clean Ubu
 
 For an Apple Silicon UTM test VM, use the `arm64-vm` profile instead of `mini-pc`.
 
+For a standard x86_64 VM on VirtualBox, VMware, KVM, or x86_64 UTM, use the `x86_64-vm` profile.
+
 This avoids mixing two problems at once:
 
 - OS imaging and boot automation;
@@ -25,12 +27,19 @@ For UTM on Apple Silicon, set:
 FLATCMS_PROFILE=arm64-vm
 ```
 
+For x86_64 virtualization tests, set:
+
+```env
+FLATCMS_PROFILE=x86_64-vm
+```
+
 ## Test Order
 
 1. NUC with profile `mini-pc`.
 2. Old Celeron PC with profile `legacy-pc`.
-3. Raspberry Pi 4 with profile `raspberry-pi`.
-4. Synology DS120 with a DSM-specific package path later.
+3. x86_64 VM with profile `x86_64-vm`.
+4. Raspberry Pi 4 with profile `raspberry-pi`.
+5. Synology DS120 with a DSM-specific package path later.
 
 ## Expected MVP Result
 

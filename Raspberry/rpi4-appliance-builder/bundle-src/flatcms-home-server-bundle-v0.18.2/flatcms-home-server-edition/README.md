@@ -14,6 +14,7 @@ The product goal is simple:
 | `mini-pc` | Intel NUC / N100 / N150 / similar | Bootable USB ISO | MVP target |
 | `legacy-pc` | Older Intel Celeron PC | Bootable USB ISO | MVP target |
 | `synology-nas` | Synology DS120 and similar | DSM package / Web Station integration | Separate package path |
+| `x86_64-vm` | VirtualBox / VMware / KVM x86_64 VM | VM-oriented test profile | Validation target |
 | `proxmox` | Proxmox host | VM template / LXC template | Later target |
 
 ## MVP Scope

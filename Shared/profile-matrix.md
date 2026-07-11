@@ -10,6 +10,7 @@ The current installer already contains profiles that map naturally to future FHS
 | `mini-pc` | `x86_64` | `bootable-usb-iso` | `PC/` |
 | `legacy-pc` | `x86_64` | `bootable-usb-iso` | `PC/` |
 | `proxmox` | `x86_64` | `vm-template` | `VM/` |
+| `x86_64-vm` | `x86_64` | `virtual-machine-test` | `VM/` |
 | `arm64-vm` | `aarch64` | `virtual-machine-test` | `VM/` |
 | `synology-nas` | `any` | `dsm-package` | `NAS/` later |
 
@@ -27,4 +28,3 @@ The conceptual model already exists inside the current installer:
 ## Practical consequence
 
 The next implementation phase should reuse this profile logic instead of inventing a second parallel system.
-

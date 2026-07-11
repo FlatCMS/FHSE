@@ -42,3 +42,7 @@ This target can already prepare the shared FHSE bundle archive through:
 It can also stage the first local ISO workspace skeleton through:
 
 - `tools/stage-workspace.sh`
+
+And render a final autoinstall seed from a local `.env` file through:
+
+- `tools/render-autoinstall-user-data.sh`

@@ -34,3 +34,7 @@ This target can already prepare the shared FHSE bundle archive through:
 It can also stage the first local VM workspace skeleton through:
 
 - `tools/stage-workspace.sh`
+
+And render a final cloud-init seed from a local `.env` file through:
+
+- `tools/render-cloud-init-user-data.sh`
