@@ -2,7 +2,11 @@
 
 ## Current canonical source
 
-The current canonical source of the FHSE core runtime is:
+The current neutral source of the FHSE core runtime is:
+
+- `Shared/core-bundle-source/flatcms-home-server-bundle-v0.18.2/`
+
+The current validated embedded target copy remains:
 
 - `Raspberry/rpi4-appliance-builder/bundle-src/flatcms-home-server-bundle-v0.18.2/`
 
@@ -39,10 +43,9 @@ The FlatCMS application payload is shared across targets, but the embedding meth
 
 ## Extraction rule
 
-Until the working Raspberry target is duplicated safely, the shared core should be treated as:
+Until all target builders consume the shared source automatically, the Raspberry target should be treated as:
 
-- logically shared
-- physically hosted inside the Raspberry builder
+- the validated embedded runtime
+- synchronized from the neutral shared source
 
-This avoids breaking the validated target while designing the neutral future layout.
-
+This avoids breaking the validated target while making future PC and VM work converge on one source.

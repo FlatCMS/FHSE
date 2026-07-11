@@ -14,17 +14,25 @@ Status:
 
 ## Phase 2
 
-Extract the logical common runtime into a neutral folder, for example:
+Extract the logical common runtime into a neutral folder:
 
 - `Shared/core-bundle-source/`
 
-This neutral source should include:
+Status:
+
+- done
+
+This neutral source now includes:
 
 - wizard runtime
 - installer runtime
 - profile files
 - product docs
 - examples
+
+And intentionally excludes:
+
+- the heavy `packages/flatcms.zip` payload
 
 ## Phase 3
 
@@ -44,4 +52,3 @@ Add automated validation to detect drift between:
 - Raspberry target embedding
 - future PC target embedding
 - future VM target embedding
-

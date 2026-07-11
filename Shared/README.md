@@ -4,17 +4,22 @@ This folder documents and progressively hosts the FHSE logic that should be reus
 
 ## Current state
 
-At this stage, the canonical implementation of the shared FHSE logic still lives inside the Raspberry builder source:
+At this stage, the canonical implementation of the shared FHSE logic is now duplicated in a neutral source folder for extraction work:
+
+- `Shared/core-bundle-source/flatcms-home-server-bundle-v0.18.2/`
+
+The validated Raspberry embedding remains here:
 
 - `Raspberry/rpi4-appliance-builder/bundle-src/flatcms-home-server-bundle-v0.18.2/`
 
-That bundle already contains:
+That source already contains:
 
 - the installer runtime
 - the wizard preview
 - the profile system
 - the FlatCMS deployment flow
 - the product documentation
+- but not the embedded `packages/flatcms.zip` payload
 
 ## Why this folder exists now
 
@@ -26,7 +31,13 @@ Before moving files physically, we first define:
 - what remains target-specific
 - which existing profiles already map to future targets
 
+## Current rule
+
+The shared source is intentionally kept lightweight:
+
+- source files are tracked in `Shared/core-bundle-source/`
+- the heavy `flatcms.zip` payload stays in the target builders
+
 ## Next step
 
-Once the structure is validated, the shared runtime can be extracted from the Raspberry builder into a neutral common bundle without breaking the working target.
-
+The next step is to make target builders consume this shared source through explicit synchronization or packaging scripts without breaking the working Raspberry target.

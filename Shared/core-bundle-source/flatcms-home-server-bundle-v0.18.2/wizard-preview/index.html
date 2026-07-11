@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlatCMS Home Server Edition</title>
+  <style>
+    :root {
+      --bg: #070a13;
+      --card: rgba(13, 18, 33, 0.86);
+      --line: rgba(148, 163, 184, 0.18);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --brand: #4f46e5;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top left, #1e1b4b 0, #070a13 42%, #020617 100%);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 28px;
+      background: rgba(2, 6, 23, 0.48);
+      border-right: 1px solid var(--line);
+      scrollbar-width: thin;
+    }
+
+    .brand {
+      margin-bottom: 4px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .tag {
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .steps {
+      display: grid;
+      gap: 10px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 12px;
+      align-items: center;
+      min-height: 72px;
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .step.active {
+      background: rgba(79, 70, 229, 0.16);
+      border-color: rgba(79, 70, 229, 0.8);
+    }
+
+    .step.success {
+      border-color: rgba(34, 197, 94, 0.6);
+    }
+
+    .step.failed {
+      border-color: rgba(239, 68, 68, 0.75);
+    }
+
+    .step-dot {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      font-weight: 800;
+      background: rgba(148, 163, 184, 0.16);
+      border-radius: 50%;
+    }
+
+    .step.success .step-dot {
+      color: #86efac;
+      background: rgba(34, 197, 94, 0.22);
+    }
+
+    .step strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.15;
+    }
+
+    .step small {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.15;
+      color: var(--muted);
+    }
+
+    main {
+      padding: 36px;
+    }
+
+    .shell {
+      max-width: 1060px;
+      margin: 0 auto;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .card {
+      padding: 28px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+    }
+
+    .subcard {
+      margin-top: 22px;
+      padding: 22px;
+      background: rgba(2, 6, 23, 0.38);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: #a5b4fc;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2 {
+      margin: 10px 0 12px;
+    }
+
+    h1 {
+      font-size: 42px;
+    }
+
+    h2 {
+      font-size: 30px;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+    }
+
+    p {
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+
+    .lead {
+      max-width: 760px;
+      font-size: 18px;
+    }
+
+    .reassurance {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .mini-card {
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+
+    .mini-card strong {
+      display: block;
+    }
+
+    .mini-card span {
+      display: block;
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .field-full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 15px;
+      color: #fff;
+      background: #020617;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #818cf8;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .checkline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 16px;
+      cursor: pointer;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+
+    .checkline input {
+      width: auto;
+      margin: 0;
+    }
+
+    .accordion-card {
+      padding: 18px;
+      background: rgba(79, 70, 229, 0.1);
+      border: 1px solid rgba(79, 70, 229, 0.35);
+      border-radius: 18px;
+    }
+
+    .accordion-card h3 {
+      margin: 0 0 8px;
+    }
+
+    .accordion-card p {
+      margin-top: 0;
+    }
+
+    .alert {
+      padding: 14px;
+      margin-top: 18px;
+      color: #fde68a;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 16px;
+    }
+
+    .alert.success {
+      color: #bbf7d0;
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.45);
+    }
+
+    .alert.error {
+      color: #fecaca;
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .action-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    button,
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 13px 18px;
+      font-weight: 800;
+      color: inherit;
+      text-decoration: none;
+      cursor: pointer;
+      border: 0;
+      border-radius: 14px;
+    }
+
+    .success {
+      color: #fff;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    }
+
+    .secondary {
+      color: #e2e8f0;
+      background: rgba(148, 163, 184, 0.14);
+      border: 1px solid var(--line);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .install-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+    }
+
+    .status-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .status-row small {
+      display: block;
+      color: var(--muted);
+    }
+
+    .pill {
+      padding: 5px 9px;
+      font-size: 12px;
+      color: #cbd5e1;
+      background: rgba(148, 163, 184, 0.15);
+      border-radius: 999px;
+    }
+
+    .pill.success {
+      color: #bbf7d0;
+      background: rgba(34, 197, 94, 0.16);
+    }
+
+    .pill.running {
+      color: #bfdbfe;
+      background: rgba(59, 130, 246, 0.16);
+    }
+
+    .pill.failed {
+      color: #fecaca;
+      background: rgba(239, 68, 68, 0.16);
+    }
+
+    .progress-shell {
+      height: 10px;
+      margin: 18px 0;
+      overflow: hidden;
+      background: rgba(148, 163, 184, 0.18);
+      border-radius: 999px;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #4f46e5, #22c55e);
+      transition: 0.35s;
+    }
+
+    .progress-bar.running {
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      50% {
+        filter: brightness(1.45);
+      }
+    }
+
+    .details-block {
+      margin-top: 20px;
+    }
+
+    .details-actions {
+      justify-content: flex-start;
+    }
+
+    pre {
+      max-height: 360px;
+      padding: 16px;
+      overflow: auto;
+      color: #cbd5e1;
+      word-break: break-word;
+      white-space: pre-wrap;
+      background: #020617;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .kv:last-child {
+      border-bottom: 0;
+    }
+
+    .kv span:first-child {
+      color: var(--muted);
+    }
+
+    code,
+    .mono {
+      color: #e0e7ff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .copy {
+      padding: 7px 10px;
+      margin-left: 8px;
+      font-size: 12px;
+    }
+
+    .muted-note {
+      color: var(--muted);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      padding: 14px 18px;
+      background: #0f172a;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: 0.25s;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: none;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: relative;
+        height: auto;
+        max-height: none;
+        overflow: visible;
+      }
+
+      .install-grid,
+      .form-grid,
+      .reassurance {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">FlatCMS FHSE</div>
+    <div class="tag">Raspberry Edition RC3.10</div>
+    <div class="steps" id="sidebarSteps"></div>
+  </aside>
+
+  <main>
+    <div class="shell">
+      <section class="page active" id="page-welcome">
+        <div class="card">
+          <div class="eyebrow">Bienvenue</div>
+          <h1>Bienvenue dans FlatCMS Home Server Edition</h1>
+          <p class="lead">
+            Cet assistant prépare votre Raspberry Pi avec un environnement web complet pour installer FlatCMS en local.
+            La publication via Cloudflare Tunnel peut être activée en option.
+          </p>
+
+          <div class="reassurance">
+            <div class="mini-card">
+              <strong>Raspberry optimisé</strong>
+              <span>Conçu pour Raspberry Pi 4, Pi 400, Pi 5 et Pi 500.</span>
+            </div>
+            <div class="mini-card">
+              <strong>Accès local immédiat</strong>
+              <span>Votre site est disponible sur votre réseau local à la fin de l’installation.</span>
+            </div>
+            <div class="mini-card">
+              <strong>Installation guidée</strong>
+              <span>Chaque étape prépare automatiquement votre serveur FlatCMS.</span>
+            </div>
+            <div class="mini-card">
+              <strong>Publication optionnelle</strong>
+              <span>Cloudflare Tunnel peut publier votre site sans ouvrir de ports sur votre box Internet.</span>
+            </div>
+          </div>
+
+          <div class="actions">
+            <span></span>
+            <button class="success" onclick="goConfig()">Démarrer</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-config">
+        <div class="card">
+          <div class="eyebrow">Configuration</div>
+          <h2>Configurer votre serveur FlatCMS</h2>
+          <p>Renseignez les informations de base. Par défaut, votre site sera accessible en local sur votre réseau.</p>
+
+          <div class="form-grid">
+            <div>
+              <label>Nom du serveur</label>
+              <input id="serverName" value="fhse">
+            </div>
+            <div>
+              <label>Utilisateur FlatCMS</label>
+              <input id="adminUser" value="admin">
+            </div>
+            <div class="field-full">
+              <label>Email administrateur</label>
+              <input id="adminEmail" value="admin@example.com">
+            </div>
+
+            <div class="field-full">
+              <div class="accordion-card">
+                <h3>Accès technique Ubuntu</h3>
+                <p>
+                  FHSE crée un compte technique de secours pour le diagnostic local ou SSH. L’identifiant reste fixé à
+                  <code id="technicalAccessUser" class="mono">admin</code>, mais le mot de passe doit être choisi ici
+                  avant de lancer l’installation.
+                </p>
+                <div id="technicalAccessStatus" class="alert">
+                  Définissez maintenant le mot de passe d’accès technique Ubuntu. Aucun mot de passe partagé n’est livré par défaut.
+                </div>
+                <div class="kv">
+                  <span>Compte technique</span>
+                  <span><code id="technicalAccessUserBadge" class="mono">admin</code></span>
+                </div>
+                <div class="kv">
+                  <span>État SSH par mot de passe</span>
+                  <span id="technicalAccessMode">Désactivé tant que le wizard n’a pas validé le mot de passe</span>
+                </div>
+                <div class="form-grid">
+                  <div>
+                    <label>Nouveau mot de passe technique</label>
+                    <input id="technicalPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 caractères">
+                  </div>
+                  <div>
+                    <label>Confirmer le mot de passe</label>
+                    <input id="technicalPasswordConfirm" type="password" autocomplete="new-password" placeholder="Retapez le mot de passe">
+                  </div>
+                  <div class="field-full">
+                    <label class="checkline">
+                      <input id="enableSshPasswordAuth" type="checkbox" onchange="markFieldTouched('enableSshPasswordAuth');updateTechnicalSelection()">
+                      Autoriser la connexion SSH par mot de passe pour le compte technique
+                    </label>
+                    <div class="hint" id="technicalPasswordHint">
+                      Minimum 8 caractères. Ce mot de passe sera appliqué au compte Ubuntu <code>admin</code>.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-full">
+              <label class="checkline">
+                <input id="enableCloudflare" type="checkbox" onchange="toggleCloudflare();markFieldTouched('enableCloudflare')">
+                Publier mon site avec Cloudflare Tunnel
+              </label>
+              <div class="hint">
+                Sans Cloudflare Tunnel, FlatCMS restera accessible en local sur <code>http://fhse.local/</code>.
+              </div>
+            </div>
+
+            <div id="cloudflareBox" class="field-full hidden">
+              <div class="accordion-card">
+                <h3>Publication via Cloudflare Tunnel</h3>
+                <p>
+                  Grâce à Cloudflare Tunnel, votre site devient accessible depuis Internet sans ouvrir de ports sur votre box.
+                  Votre Raspberry Pi reste protégé sur votre réseau local, tandis que Cloudflare publie votre domaine de façon sécurisée.
+                </p>
+                <div class="form-grid">
+                  <div class="field-full">
+                    <label>Domaine public Cloudflare</label>
+                    <input id="domain" placeholder="exemple : mon-site.com" autocomplete="off">
+                    <div class="hint">
+                      Dans Cloudflare Tunnel, créez une application publiée vers <code>HTTP → localhost:80</code>, sans chemin.
+                    </div>
+                  </div>
+                  <div class="field-full">
+                    <label>Token Cloudflare Tunnel</label>
+                    <input id="cloudflareToken" type="password" placeholder="Collez ici le token complet fourni par Cloudflare" autocomplete="off">
+                    <div class="hint">
+                      Dans l’assistant Cloudflare, sélectionnez Debian pour récupérer le token d’installation.
+                      Ce choix fonctionne avec Ubuntu Server, utilisé par FHSE.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert">
+            Ubuntu Server est déjà intégré à l’image FHSE. L’assistant configure automatiquement les composants nécessaires au fonctionnement de FlatCMS.
+          </div>
+
+          <div class="actions">
+            <button class="secondary" onclick="showPage('welcome')">Retour</button>
+            <button class="success" onclick="configureAndGo()">Continuer</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-step">
+        <div class="install-grid">
+          <div class="card">
+            <div class="eyebrow" id="stepEyebrow">Installation</div>
+            <h2 id="stepTitle">Étape</h2>
+            <p id="stepDescription"></p>
+            <div id="stepAlert" class="alert">Cette opération peut prendre plusieurs minutes.</div>
+
+            <div class="progress-shell">
+              <div class="progress-bar" id="stepProgress"></div>
+            </div>
+
+            <div class="actions">
+              <button class="secondary" onclick="prevStep()">Retour</button>
+              <div class="action-right">
+                <button id="runBtn" class="success" onclick="runCurrentStep()">Lancer</button>
+                <button id="continueBtn" class="success hidden" onclick="nextStep()">Continuer</button>
+              </div>
+            </div>
+
+            <details class="details-block">
+              <summary>Afficher les détails techniques</summary>
+              <pre id="stepLog"></pre>
+            </details>
+          </div>
+
+          <div class="card">
+            <h3>Progression</h3>
+            <div class="progress-shell">
+              <div class="progress-bar" id="globalProgress"></div>
+            </div>
+            <div class="status-list" id="statusList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-final">
+        <div class="card">
+          <div class="eyebrow">Terminé</div>
+          <h2>Votre serveur FlatCMS est opérationnel</h2>
+          <p id="finalIntro">FlatCMS est installé. Le panneau serveur avancé est accessible ci-dessous.</p>
+
+          <div class="actions">
+            <a id="finalFlatcms" class="button success" target="_blank" rel="noreferrer">Accéder à FlatCMS</a>
+            <a id="finalPanel" class="button secondary" target="_blank" rel="noreferrer">Administration serveur avancée</a>
+          </div>
+
+          <div class="subcard">
+            <h3>Accès aaPanel</h3>
+            <div class="kv">
+              <span>URL</span>
+              <span>
+                <code id="finalPanelUrl"></code>
+                <button class="copy secondary" onclick="copyText(event, 'finalPanelUrl')">Copier</button>
+              </span>
+            </div>
+            <div class="kv">
+              <span>Identifiant</span>
+              <span>
+                <code id="finalPanelUser"></code>
+                <button class="copy secondary" onclick="copyText(event, 'finalPanelUser')">Copier</button>
+              </span>
+            </div>
+            <div class="kv">
+              <span>Mot de passe</span>
+              <span>
+                <code id="finalPanelPass"></code>
+                <button class="copy secondary" onclick="copyText(event, 'finalPanelPass')">Copier</button>
+              </span>
+            </div>
+          </div>
+
+          <div class="subcard">
+            <h3>Accès technique Ubuntu</h3>
+            <div class="kv">
+              <span>Compte</span>
+              <span>
+                <code id="finalTechnicalUser"></code>
+                <button class="copy secondary" onclick="copyText(event, 'finalTechnicalUser')">Copier</button>
+              </span>
+            </div>
+            <div class="kv">
+              <span>SSH par mot de passe</span>
+              <span id="finalTechnicalSsh"></span>
+            </div>
+            <div class="kv">
+              <span>Mot de passe</span>
+              <span class="muted-note" id="finalTechnicalNote">
+                Non affiché pour des raisons de sécurité. Il est défini dans le wizard FHSE.
+              </span>
+            </div>
+          </div>
+
+          <details class="details-block" open>
+            <summary>Rapport final</summary>
+            <div class="actions details-actions">
+              <button class="secondary" onclick="copyReport()">Copier le rapport</button>
+              <button class="secondary" onclick="exportReport()">Exporter le rapport</button>
+            </div>
+            <pre id="finalReport"></pre>
+          </details>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const stepOrder = ['system', 'panel', 'nginx', 'php', 'site', 'flatcms', 'checks'];
+const technicalDefaults = {
+  configured: false,
+  user: 'admin',
+  ssh_password_auth_enabled: false,
+  updated_at: ''
+};
+
+let statusPayload = null;
+let currentPage = localStorage.getItem('fhseRc310Page') || 'welcome';
+let currentStepId = localStorage.getItem('fhseRc310Step') || 'system';
+let lastSuccess = {};
+
+function byId(id) {
+  return document.getElementById(id);
+}
+
+function markFieldTouched(id) {
+  const field = byId(id);
+  if (field) {
+    field.dataset.userTouched = '1';
+  }
+}
+
+function cleanDomain(value) {
+  return (value || '').trim().replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase();
+}
+
+function cloudflareEnabled() {
+  return !!byId('enableCloudflare')?.checked;
+}
+
+function technicalAccessState() {
+  return Object.assign({}, technicalDefaults, statusPayload?.technical_access || {});
+}
+
+function technicalAccessConfigured() {
+  return !!technicalAccessState().configured;
+}
+
+function toggleCloudflare() {
+  byId('cloudflareBox').classList.toggle('hidden', !cloudflareEnabled());
+}
+
+function updateTechnicalSelection() {
+  const technical = technicalAccessState();
+  const sshEnabled = !!byId('enableSshPasswordAuth')?.checked;
+  const mode = byId('technicalAccessMode');
+  if (!mode) {
+    return;
+  }
+
+  if (technical.configured) {
+    mode.textContent = sshEnabled
+      ? 'Activé pour le compte technique'
+      : 'Désactivé pour le compte technique';
+    return;
+  }
+
+  mode.textContent = sshEnabled
+    ? 'Sera activé après validation du wizard'
+    : 'Reste désactivé jusqu’à activation explicite';
+}
+
+function configPayload() {
+  const enabled = cloudflareEnabled();
+
+  return {
+    profile: 'raspberry-pi',
+    server_name: byId('serverName').value || 'fhse',
+    site_name: '',
+    access_mode: enabled ? 'cloudflare_tunnel' : 'local_only',
+    admin_email: byId('adminEmail').value || 'admin@example.com',
+    admin_user: byId('adminUser').value || 'admin',
+    domain: enabled ? cleanDomain(byId('domain').value) : '',
+    cloudflare_tunnel_token: enabled ? (byId('cloudflareToken').value || '').trim() : '',
+    technical_password: byId('technicalPassword').value || '',
+    technical_password_confirm: byId('technicalPasswordConfirm').value || '',
+    enable_ssh_password_auth: !!byId('enableSshPasswordAuth')?.checked
+  };
+}
+
+function showToast(text) {
+  const toast = byId('toast');
+  toast.textContent = text;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+function showPage(name) {
+  currentPage = name;
+  localStorage.setItem('fhseRc310Page', name);
+  document.querySelectorAll('.page').forEach((page) => page.classList.remove('active'));
+  byId(`page-${name}`).classList.add('active');
+  render();
+}
+
+function goConfig() {
+  showPage('config');
+}
+
+function validateConfig() {
+  const config = configPayload();
+  const configured = technicalAccessConfigured();
+  const wantsPasswordUpdate = !!config.technical_password || !!config.technical_password_confirm;
+
+  if (!configured && !config.technical_password) {
+    showToast('Définissez le mot de passe d’accès technique Ubuntu');
+    return false;
+  }
+
+  if (!configured && !config.technical_password_confirm) {
+    showToast('Confirmez le mot de passe d’accès technique Ubuntu');
+    return false;
+  }
+
+  if (wantsPasswordUpdate && (!config.technical_password || !config.technical_password_confirm)) {
+    showToast('Renseignez et confirmez le mot de passe technique');
+    return false;
+  }
+
+  if (wantsPasswordUpdate && config.technical_password !== config.technical_password_confirm) {
+    showToast('Les deux mots de passe techniques doivent être identiques');
+    return false;
+  }
+
+  if (config.technical_password && config.technical_password.length < 8) {
+    showToast('Le mot de passe technique doit contenir au moins 8 caractères');
+    return false;
+  }
+
+  if (config.access_mode === 'cloudflare_tunnel' && !config.domain) {
+    showToast('Domaine Cloudflare obligatoire');
+    return false;
+  }
+
+  if (config.access_mode === 'cloudflare_tunnel' && !config.cloudflare_tunnel_token) {
+    showToast('Token Cloudflare obligatoire');
+    return false;
+  }
+
+  return true;
+}
+
+async function configureAndGo() {
+  if (!validateConfig()) {
+    return;
+  }
+
+  const response = await fetch('/api/configure', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(configPayload())
+  });
+  const data = await response.json();
+  if (!data.ok) {
+    showToast(data.error || 'Configuration impossible');
+    return;
+  }
+
+  currentStepId = 'system';
+  localStorage.setItem('fhseRc310Step', currentStepId);
+  byId('technicalPassword').value = '';
+  byId('technicalPasswordConfirm').value = '';
+  showPage('step');
+}
+
+function statusLabel(status) {
+  return status === 'success'
+    ? 'Réussi'
+    : status === 'running'
+      ? 'En cours'
+      : status === 'failed'
+        ? 'Erreur'
+        : 'En attente';
+}
+
+function dotFor(step) {
+  return step.status === 'success' ? '✓' : step.status === 'failed' ? '!' : step.number;
+}
+
+function renderSidebar(steps) {
+  const sidebar = byId('sidebarSteps');
+  let html = '';
+
+  [
+    {n: 1, t: 'Accueil', s: 'Présentation', id: 'welcome'},
+    {n: 2, t: 'Configuration', s: 'Accès local, secours et Cloudflare', id: 'config'}
+  ].forEach((item) => {
+    const css = currentPage === item.id
+      ? 'active'
+      : (currentPage === 'step' || currentPage === 'final' || (item.id === 'welcome' && currentPage === 'config'))
+        ? 'success'
+        : '';
+
+    html += `
+      <div class="step ${css}">
+        <div class="step-dot">${css === 'success' ? '✓' : item.n}</div>
+        <div>
+          <strong>${item.t}</strong>
+          <small>${item.s}</small>
+        </div>
+      </div>
+    `;
+  });
+
+  steps.forEach((step) => {
+    const css = currentPage === 'step' && step.id === currentStepId ? 'active' : step.status;
+    html += `
+      <div class="step ${css}">
+        <div class="step-dot">${dotFor(step)}</div>
+        <div>
+          <strong>${step.title}</strong>
+          <small>${step.subtitle}</small>
+        </div>
+      </div>
+    `;
+  });
+
+  sidebar.innerHTML = html;
+}
+
+function renderStatusList(steps) {
+  byId('statusList').innerHTML = steps.map((step) => `
+    <div class="status-row">
+      <div class="step-dot">${dotFor(step)}</div>
+      <div>
+        <strong>${step.title}</strong>
+        <small>${step.subtitle}</small>
+      </div>
+      <span class="pill ${step.status}">${statusLabel(step.status)}</span>
+    </div>
+  `).join('');
+}
+
+function activeStep() {
+  return (statusPayload?.steps || []).find((step) => step.id === currentStepId) || (statusPayload?.steps || [])[0];
+}
+
+function setCopyValue(id, value) {
+  const el = byId(id);
+  if (!el) {
+    return;
+  }
+
+  const normalized = (value || '').toString().trim();
+  el.textContent = normalized || 'Non disponible';
+  el.dataset.copyValue = normalized;
+}
+
+function renderConfigPage() {
+  const technical = technicalAccessState();
+  const status = byId('technicalAccessStatus');
+  const hint = byId('technicalPasswordHint');
+  const sshField = byId('enableSshPasswordAuth');
+
+  byId('technicalAccessUser').textContent = technical.user || 'admin';
+  byId('technicalAccessUserBadge').textContent = technical.user || 'admin';
+
+  if (sshField && !sshField.dataset.userTouched) {
+    sshField.checked = !!technical.ssh_password_auth_enabled;
+  }
+
+  if (technical.configured) {
+    status.className = 'alert success';
+    status.textContent = 'Le compte technique Ubuntu est déjà configuré. Laissez les deux champs vides pour conserver le mot de passe actuel.';
+    hint.textContent = 'Laissez les champs vides pour conserver le mot de passe courant, ou renseignez un nouveau mot de passe pour le remplacer.';
+  } else {
+    status.className = 'alert';
+    status.textContent = 'Définissez maintenant le mot de passe d’accès technique Ubuntu. Aucun mot de passe partagé n’est livré par défaut.';
+    hint.textContent = 'Minimum 8 caractères. Ce mot de passe sera appliqué au compte Ubuntu admin.';
+  }
+
+  updateTechnicalSelection();
+}
+
+function renderStepPage() {
+  if (!statusPayload) {
+    return;
+  }
+
+  const step = activeStep();
+  if (!step) {
+    return;
+  }
+
+  byId('stepEyebrow').textContent = `Étape ${step.number}`;
+  byId('stepTitle').textContent = step.headline;
+  byId('stepDescription').textContent = step.description;
+  byId('globalProgress').style.width = `${statusPayload.progress || 0}%`;
+  renderStatusList(statusPayload.steps || []);
+
+  const alert = byId('stepAlert');
+  const run = byId('runBtn');
+  const next = byId('continueBtn');
+  const bar = byId('stepProgress');
+
+  alert.className = 'alert';
+  bar.classList.remove('running');
+  run.classList.remove('hidden');
+
+  if (step.status === 'running') {
+    alert.textContent = 'Installation en cours. Cette opération peut prendre plusieurs minutes.';
+    run.disabled = true;
+    run.textContent = 'Installation en cours...';
+    next.classList.add('hidden');
+    bar.style.width = '68%';
+    bar.classList.add('running');
+  } else if (step.status === 'success') {
+    alert.classList.add('success');
+    alert.textContent = step.success || 'Étape réussie';
+    run.classList.add('hidden');
+    next.classList.remove('hidden');
+    bar.style.width = '100%';
+
+    if (!lastSuccess[step.id]) {
+      lastSuccess[step.id] = true;
+      showToast('Étape réussie');
+    }
+  } else if (step.status === 'failed') {
+    alert.classList.add('error');
+    alert.textContent = 'Cette étape a rencontré une erreur. Consultez les détails techniques puis relancez.';
+    run.disabled = false;
+    run.textContent = 'Relancer cette étape';
+    next.classList.add('hidden');
+    bar.style.width = '100%';
+  } else {
+    alert.textContent = 'Cette opération peut prendre plusieurs minutes.';
+    run.disabled = false;
+    run.textContent = step.action || 'Lancer';
+    next.classList.add('hidden');
+    bar.style.width = '0%';
+  }
+
+  fetch(`/api/log?step=${encodeURIComponent(step.id)}`)
+    .then((response) => response.json())
+    .then((data) => {
+      byId('stepLog').textContent = data.log || 'Aucun log pour le moment.';
+    })
+    .catch(() => {});
+}
+
+function renderFinal() {
+  if (!statusPayload) {
+    return;
+  }
+
+  const configuration = statusPayload.configuration || {};
+
+  byId('finalFlatcms').href = configuration.flatcms_url || '#';
+  byId('finalPanel').href = configuration.aapanel_url || '#';
+  byId('finalIntro').textContent = configuration.cloudflare_url
+    ? 'FlatCMS est installé et publié via Cloudflare Tunnel. Votre site est disponible sur votre domaine public. Le panneau serveur avancé est accessible ci-dessous.'
+    : 'FlatCMS est installé et disponible sur votre réseau local. Le panneau serveur avancé est accessible ci-dessous.';
+
+  setCopyValue('finalPanelUrl', configuration.aapanel_url);
+  setCopyValue('finalPanelUser', configuration.aapanel_username);
+  setCopyValue('finalPanelPass', configuration.aapanel_password);
+  setCopyValue('finalTechnicalUser', configuration.technical_access_user);
+
+  byId('finalTechnicalSsh').textContent = configuration.ssh_password_auth_enabled
+    ? 'Activé'
+    : 'Désactivé';
+  byId('finalTechnicalNote').textContent = configuration.technical_access_ready
+    ? 'Mot de passe déjà défini dans le wizard FHSE. Il n’est jamais réaffiché à l’écran.'
+    : 'Mot de passe non configuré. Relancez le wizard FHSE pour l’appliquer.';
+  byId('finalReport').textContent = Object.entries(statusPayload.report || {})
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
+}
+
+function render() {
+  renderSidebar(statusPayload?.steps || []);
+  renderConfigPage();
+
+  if (currentPage === 'step') {
+    renderStepPage();
+  }
+
+  if (currentPage === 'final') {
+    renderFinal();
+  }
+}
+
+async function refreshStatus() {
+  try {
+    const response = await fetch('/api/status');
+    statusPayload = await response.json();
+    const running = (statusPayload.steps || []).find((step) => step.status === 'running');
+
+    if (running) {
+      currentStepId = running.id;
+      localStorage.setItem('fhseRc310Step', currentStepId);
+      if (currentPage !== 'step') {
+        showPage('step');
+      }
+    }
+
+    render();
+  } catch (error) {
+    // Silent on purpose: the wizard can render even while the backend is starting.
+  }
+}
+
+async function runCurrentStep() {
+  if (!validateConfig()) {
+    return;
+  }
+
+  const step = activeStep();
+  if (!step) {
+    return;
+  }
+
+  byId('runBtn').disabled = true;
+  const response = await fetch('/api/run-step', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({step_id: step.id, config: configPayload()})
+  });
+  const data = await response.json();
+  if (!data.ok) {
+    showToast(data.error || 'Impossible de lancer');
+  }
+  await refreshStatus();
+}
+
+function nextStep() {
+  const index = stepOrder.indexOf(currentStepId);
+  if (index >= 0 && index < stepOrder.length - 1) {
+    currentStepId = stepOrder[index + 1];
+    localStorage.setItem('fhseRc310Step', currentStepId);
+    showPage('step');
+    return;
+  }
+
+  showPage('final');
+}
+
+function prevStep() {
+  const index = stepOrder.indexOf(currentStepId);
+  if (index > 0) {
+    currentStepId = stepOrder[index - 1];
+    localStorage.setItem('fhseRc310Step', currentStepId);
+    showPage('step');
+    return;
+  }
+
+  showPage('config');
+}
+
+async function copyText(event, id) {
+  if (event) {
+    event.preventDefault();
+  }
+
+  const target = byId(id);
+  const value = (target?.dataset.copyValue || target?.textContent || '').trim();
+  if (!value || value === 'Non disponible') {
+    showToast('Aucune donnée à copier');
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    showToast('Copié');
+  } catch (_) {
+    const area = document.createElement('textarea');
+    area.value = value;
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand('copy');
+    area.remove();
+    showToast('Copié');
+  }
+}
+
+async function copyReport() {
+  const text = (byId('finalReport')?.textContent || '').trim();
+  if (!text) {
+    showToast('Rapport vide');
+    return;
+  }
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      showToast('Rapport copié');
+      return;
+    }
+  } catch (_) {
+    // Fallback below.
+  }
+
+  try {
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.left = '-9999px';
+    area.style.top = '0';
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    const copied = document.execCommand('copy');
+    area.remove();
+    showToast(copied ? 'Rapport copié' : 'Copie impossible, utilisez le téléchargement');
+  } catch (_) {
+    showToast('Copie impossible, utilisez le téléchargement');
+  }
+}
+
+function exportReport() {
+  const value = byId('finalReport').textContent || '';
+  const blob = new Blob([value], {type: 'text/plain;charset=utf-8'});
+  const anchor = document.createElement('a');
+  anchor.href = URL.createObjectURL(blob);
+  anchor.download = 'fhse-report.env';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(anchor.href), 1000);
+}
+
+showPage(currentPage);
+toggleCloudflare();
+renderConfigPage();
+refreshStatus();
+setInterval(refreshStatus, 2500);
+</script>
+</body>
+</html>

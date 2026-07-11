@@ -1,0 +1,6 @@
+FHS_PROFILE_LABEL="FlatCMS Home Server for Raspberry Pi"
+FHS_EXPECTED_ARCH="aarch64"
+FHS_INSTALL_MODE="preinstalled-image"
+FHS_MIN_RAM_MB=2048
+FHS_RECOMMENDED_DISK_GB=32
+
