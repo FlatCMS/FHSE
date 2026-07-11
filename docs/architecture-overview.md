@@ -61,8 +61,19 @@ Every target should converge toward the same user-facing outcome:
 - PHP with required extensions
 - FlatCMS deployed automatically
 - local onboarding wizard
-- optional Cloudflare Tunnel
+- optional Cloudflare Tunnel capability
 - no default technical password exposed
+
+## Publication model
+
+Cloudflare Tunnel should evolve toward a split model:
+
+- FHSE provides the server-side capability
+- FlatCMS provides the user-facing publication workflow
+
+See:
+
+- `docs/cloudflare-publication-model.md`
 
 ## Release policy
 
@@ -80,4 +91,3 @@ Do not keep in Git:
 - generated disk images
 - generated ISO files
 - generated VM appliance binaries
-
