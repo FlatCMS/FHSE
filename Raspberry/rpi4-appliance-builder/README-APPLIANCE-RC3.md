@@ -1,8 +1,8 @@
-# FlatCMS Home Server Edition — Raspberry Pi Appliance RC3.10
+# FlatCMS Home Server Edition — Raspberry Pi Appliance RC3.11
 
-RC3.10 abandonne la dépendance exclusive à cloud-init.
+RC3.11 abandonne la dépendance exclusive à cloud-init.
 
-La génération de l'image doit être faite depuis Linux, car RC3.10 patche directement la partition rootfs ext4 de l'image Ubuntu Raspberry Pi officielle.
+La génération de l'image doit être faite depuis Linux, car RC3.11 patche directement la partition rootfs ext4 de l'image Ubuntu Raspberry Pi officielle.
 
 Objectif produit :
 
@@ -17,16 +17,16 @@ Objectif produit :
 Depuis une VM Ubuntu, un PC Linux, ou GitHub Actions :
 
 ```bash
-unzip fhse-rpi4-appliance-builder-v0.18.2-rc3.10.zip
-cd fhse-rpi4-appliance-builder-v0.18.2-rc3.10
+unzip fhse-rpi4-appliance-builder-v0.18.2-rc3.11.zip
+cd fhse-rpi4-appliance-builder-v0.18.2-rc3.11
 sudo ./tools/linux-build-fhse-rpi4-appliance-image.sh --download
 ```
 
 Image générée :
 
 ```text
-dist/fhse-rpi4-v0.18.2-rpi4.1-rc3.10.img
-dist/fhse-rpi4-v0.18.2-rpi4.1-rc3.10.img.xz
+dist/fhse-rpi4-v0.18.2-rpi4.1-rc3.11.img
+dist/fhse-rpi4-v0.18.2-rpi4.1-rc3.11.img.xz
 ```
 
 ## Validation
@@ -48,7 +48,7 @@ mot de passe : choisi dans le wizard FHSE
 ## Différence avec RC2.2
 
 RC2.2 dépendait de cloud-init depuis la partition boot.
-RC3.10 injecte directement un service systemd dans la partition rootfs :
+RC3.11 injecte directement un service systemd dans la partition rootfs :
 
 ```text
 /etc/systemd/system/fhse-rootfs-firstboot.service

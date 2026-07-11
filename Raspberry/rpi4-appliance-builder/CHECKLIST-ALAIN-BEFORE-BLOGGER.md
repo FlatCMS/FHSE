@@ -1,6 +1,6 @@
-# Checklist Alain — FHSE Raspberry Pi rc3.10
+# Checklist Alain — FHSE Raspberry Pi rc3.11
 
-Cette rc3.10 est validée uniquement si, après flash avec Raspberry Pi Imager et sans aucune commande terminal :
+Cette rc3.11 est validée uniquement si, après flash avec Raspberry Pi Imager et sans aucune commande terminal :
 
 - `http://fhse.local:8080` ouvre le wizard FHSE.
 - `http://IP_DU_RASPBERRY:8080` ouvre aussi le wizard.
@@ -13,6 +13,7 @@ Cette rc3.10 est validée uniquement si, après flash avec Raspberry Pi Imager e
 - L'étape site aaPanel passe.
 - L'étape FlatCMS passe.
 - `http://IP_DU_RASPBERRY/` ouvre FlatCMS.
+- Le bouton `Administration serveur avancée` ouvre `http://fhse.local:8080/server/` sans alerte bloquante de certificat.
 - Le rapport final contient `CHECK_FLATCMS_ROUTE=ok`.
 
 Si un seul point échoue, ne pas transmettre l'image au blogger.

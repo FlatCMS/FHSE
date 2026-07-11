@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 BASE_INPUT="${1:-}"
-OUT_NAME="${2:-fhse-rpi4-v0.18.2-rpi4.1-rc2.2.img}"
+OUT_NAME="${2:-fhse-rpi4-v0.18.2-rpi4.1-rc3.11.img}"
 OUT_IMG="$DIST_DIR/$OUT_NAME"
 OUT_XZ="$OUT_IMG.xz"
 
@@ -21,7 +21,7 @@ Recommended first validation with Raspberry Pi Imager:
 
 Examples:
   $0 ~/Downloads/ubuntu-22.04.5-preinstalled-server-arm64+raspi.img.xz
-  $0 --download fhse-rpi4-v0.18.2-rpi4.1-rc2.2.img
+  $0 --download fhse-rpi4-v0.18.2-rpi4.1-rc3.11.img
 USAGE
 }
 
@@ -138,9 +138,9 @@ test -f "$BOOT_MOUNT/fhse/fhse-firstboot.sh"
 test -f "$BOOT_MOUNT/fhse/flatcms-home-server-bundle-v0.18.2-no-builders.zip"
 test -f "$BOOT_MOUNT/meta-data"
 grep -q 'lock_passwd: true' "$BOOT_MOUNT/user-data"
-grep -q 'fhse-rpi4-rc3-10-20260711' "$BOOT_MOUNT/meta-data"
+grep -q 'fhse-rpi4-rc3-11-20260711' "$BOOT_MOUNT/meta-data"
 grep -q 'hostname: fhse' "$BOOT_MOUNT/user-data"
-grep -q 'fhse-rpi4-rc3-10-20260711' "$BOOT_MOUNT/meta-data"
+grep -q 'fhse-rpi4-rc3-11-20260711' "$BOOT_MOUNT/meta-data"
 grep -q 'fhse-firstboot.sh' "$BOOT_MOUNT/user-data"
 grep -q 'ds=nocloud;s=/boot/firmware/' "$BOOT_MOUNT/cmdline.txt"
 
@@ -155,7 +155,7 @@ test -f "$BOOT_MOUNT/user-data"
 test -f "$BOOT_MOUNT/fhse/flatcms-home-server-bundle-v0.18.2-no-builders.zip"
 test -f "$BOOT_MOUNT/meta-data"
 grep -q 'lock_passwd: true' "$BOOT_MOUNT/user-data"
-grep -q 'fhse-rpi4-rc3-10-20260711' "$BOOT_MOUNT/meta-data"
+grep -q 'fhse-rpi4-rc3-11-20260711' "$BOOT_MOUNT/meta-data"
 grep -q 'ds=nocloud;s=/boot/firmware/' "$BOOT_MOUNT/cmdline.txt"
 echo "Image boot partition validation: OK"
 unmount_image

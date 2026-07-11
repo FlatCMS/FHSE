@@ -7,6 +7,8 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 AAPANEL_CREDENTIALS_FILE="$FHS_LOG_DIR/aapanel-credentials.env"
 AAPANEL_INSTALL_CAPTURE="$FHS_LOG_DIR/aapanel-install-output.log"
+AAPANEL_SSL_FLAG="/www/server/panel/data/ssl.pl"
+AAPANEL_INIT_SCRIPT="/etc/init.d/bt"
 
 normalize_local_aapanel_url() {
   local raw_url="$1"
@@ -18,7 +20,21 @@ normalize_local_aapanel_url() {
     return 0
   fi
   path_part="$(printf '%s' "$raw_url" | sed -E 's#^https?://(\[[^]]+\]|[^/:]+)(:[0-9]+)?(/.*)?$#\2\3#')"
-  printf 'https://%s%s' "$local_ipv4" "$path_part"
+  printf 'http://%s%s' "$local_ipv4" "$path_part"
+}
+
+disable_aapanel_panel_ssl() {
+  log "Disabling aaPanel panel SSL for trusted local FHSE access."
+
+  rm -f "$AAPANEL_SSL_FLAG" 2>/dev/null || true
+
+  if [ -x "$AAPANEL_INIT_SCRIPT" ]; then
+    "$AAPANEL_INIT_SCRIPT" restart >/dev/null 2>&1 || true
+  elif command -v service >/dev/null 2>&1; then
+    service bt restart >/dev/null 2>&1 || true
+  fi
+
+  write_report_value "AAPANEL_PANEL_SSL" "disabled"
 }
 
 parse_aapanel_info_from_text() {
@@ -128,6 +144,7 @@ else
 fi
 
 wait_for_aapanel_core
+disable_aapanel_panel_ssl
 
 # Mark aaPanel installed BEFORE credential lookup so the stack step can continue even if bt output is slow.
 write_report_value "AAPANEL_STATUS" "installed"

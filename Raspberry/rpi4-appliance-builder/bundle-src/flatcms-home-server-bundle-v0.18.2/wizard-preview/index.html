@@ -481,6 +481,19 @@
       gap: 8px;
     }
 
+    .technical-command-list {
+      display: grid;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .technical-command-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
     .technical-command-link {
       display: inline-flex;
       align-items: center;
@@ -549,7 +562,7 @@
 <div class="layout">
   <aside class="sidebar">
     <div class="brand">FlatCMS FHSE</div>
-    <div class="tag">Raspberry Edition RC3.10</div>
+    <div class="tag">Raspberry Edition RC3.11</div>
     <div class="steps" id="sidebarSteps"></div>
   </aside>
 
@@ -749,6 +762,9 @@
 
           <div class="subcard">
             <h3>Accès aaPanel</h3>
+            <p class="muted-note">
+              FHSE relaie l’accès au panneau serveur avancé pour éviter les alertes de certificat local dans votre navigateur.
+            </p>
             <div class="kv">
               <span>URL</span>
               <span>
@@ -770,6 +786,17 @@
                 <button class="copy secondary" onclick="copyText(event, 'finalPanelPass')">Copier</button>
               </span>
             </div>
+            <details class="details-block">
+              <summary>Accès expert direct</summary>
+              <div class="hint">Lien technique de secours vers aaPanel. Réservé au dépannage avancé.</div>
+              <div class="kv">
+                <span>URL directe</span>
+                <span>
+                  <code id="finalPanelDirectUrl"></code>
+                  <button class="copy secondary" onclick="copyText(event, 'finalPanelDirectUrl')">Copier</button>
+                </span>
+              </div>
+            </details>
           </div>
 
           <div class="subcard">
@@ -789,11 +816,20 @@
               <span>Commande SSH</span>
               <span class="technical-command-shell">
                 <span class="muted-note">Votre serveur est accessible via un terminal avec cette commande :</span>
-                <span>
-                  <a id="finalTechnicalSshLink" class="technical-command-link" href="#" rel="noreferrer">
-                    <code id="finalTechnicalCommand" class="mono"></code>
-                  </a>
-                  <button class="copy secondary" onclick="copyText(event, 'finalTechnicalCommand')">Copier</button>
+                <span class="technical-command-list">
+                  <span class="technical-command-row">
+                    <a id="finalTechnicalSshLink" class="technical-command-link" href="#" rel="noreferrer">
+                      <code id="finalTechnicalCommand" class="mono"></code>
+                    </a>
+                    <button class="copy secondary" onclick="copyText(event, 'finalTechnicalCommand')">Copier</button>
+                  </span>
+                  <span id="finalTechnicalFallbackShell" class="technical-command-row hidden">
+                    <a id="finalTechnicalFallbackLink" class="technical-command-link" href="#" rel="noreferrer">
+                      <code id="finalTechnicalFallbackCommand" class="mono"></code>
+                    </a>
+                    <button class="copy secondary" onclick="copyText(event, 'finalTechnicalFallbackCommand')">Copier</button>
+                    <span class="muted-note">Commande de secours via l’IP locale</span>
+                  </span>
                 </span>
               </span>
             </div>
@@ -1172,7 +1208,11 @@ function renderFinal() {
   const configuration = statusPayload.configuration || {};
   const technicalUser = configuration.technical_access_user || 'admin';
   const technicalCommand = `ssh ${technicalUser}@fhse.local`;
+  const localIp = (statusPayload.local_ip || '').trim();
+  const technicalFallbackCommand = localIp ? `ssh ${technicalUser}@${localIp}` : '';
   const technicalLink = byId('finalTechnicalSshLink');
+  const technicalFallbackLink = byId('finalTechnicalFallbackLink');
+  const technicalFallbackShell = byId('finalTechnicalFallbackShell');
 
   byId('finalFlatcms').href = configuration.flatcms_url || '#';
   byId('finalPanel').href = configuration.aapanel_url || '#';
@@ -1181,10 +1221,12 @@ function renderFinal() {
     : 'FlatCMS est installé et disponible sur votre réseau local. Le panneau serveur avancé est accessible ci-dessous.';
 
   setCopyValue('finalPanelUrl', configuration.aapanel_url);
+  setCopyValue('finalPanelDirectUrl', configuration.aapanel_direct_url);
   setCopyValue('finalPanelUser', configuration.aapanel_username);
   setCopyValue('finalPanelPass', configuration.aapanel_password);
   setCopyValue('finalTechnicalUser', technicalUser);
   setCopyValue('finalTechnicalCommand', technicalCommand);
+  setCopyValue('finalTechnicalFallbackCommand', technicalFallbackCommand);
 
   byId('finalTechnicalSsh').textContent = configuration.ssh_password_auth_enabled
     ? 'Activé'
@@ -1192,6 +1234,13 @@ function renderFinal() {
   if (technicalLink) {
     technicalLink.href = `ssh://${technicalUser}@fhse.local`;
     technicalLink.title = 'Ouvrir cette connexion SSH';
+  }
+  if (technicalFallbackShell) {
+    technicalFallbackShell.classList.toggle('hidden', !technicalFallbackCommand);
+  }
+  if (technicalFallbackLink && technicalFallbackCommand) {
+    technicalFallbackLink.href = `ssh://${technicalUser}@${localIp}`;
+    technicalFallbackLink.title = 'Ouvrir cette connexion SSH de secours';
   }
   byId('finalTechnicalNote').textContent = configuration.technical_access_ready
     ? 'Mot de passe déjà défini dans le wizard FHSE. Il n’est jamais réaffiché à l’écran.'
