@@ -15,7 +15,7 @@ if command -v ufw >/dev/null 2>&1; then
   ufw allow "${PORT}/tcp" 2>/dev/null || true
 fi
 
-echo "FlatCMS Home Server Installer V0.18.2 RC3.11"
+echo "FlatCMS Home Server Installer V0.18.2 RC3.12"
 echo "Open: http://$(hostname -I | awk '{print $1}'):${PORT}"
 echo
 

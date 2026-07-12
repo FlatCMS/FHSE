@@ -1,4 +1,6 @@
 .DS_Store
+__pycache__/
+*.pyc
 dist/
 tmp/
 *.img
@@ -12,3 +14,6 @@ tmp/
 *.raw
 *.tar.zst
 *.tar.xz
+images/*
+!images/README.md
+Shared/core-bundle-source/flatcms-home-server-bundle-v0.18.2/packages/flatcms.zip

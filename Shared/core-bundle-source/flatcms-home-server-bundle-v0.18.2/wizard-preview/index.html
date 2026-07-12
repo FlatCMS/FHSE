@@ -246,6 +246,42 @@
       box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
     }
 
+    .password-input-shell {
+      position: relative;
+    }
+
+    .password-input-shell input {
+      padding-right: 58px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      transform: translateY(-50%);
+    }
+
+    .password-toggle:hover,
+    .password-toggle:focus-visible,
+    .password-toggle.is-active {
+      color: #e2e8f0;
+      background: rgba(148, 163, 184, 0.12);
+      border-color: var(--line);
+    }
+
+    .password-toggle svg {
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+    }
+
     .hint {
       margin-top: 8px;
       font-size: 13px;
@@ -562,7 +598,7 @@
 <div class="layout">
   <aside class="sidebar">
     <div class="brand">FlatCMS FHSE</div>
-    <div class="tag">Raspberry Edition RC3.11</div>
+    <div class="tag">Release Candidate RC3.12</div>
     <div class="steps" id="sidebarSteps"></div>
   </aside>
 
@@ -573,14 +609,14 @@
           <div class="eyebrow">Bienvenue</div>
           <h1>Bienvenue dans FlatCMS Home Server Edition</h1>
           <p class="lead">
-            Cet assistant prépare votre Raspberry Pi avec un environnement web complet pour installer FlatCMS en local.
-            La publication via Cloudflare Tunnel peut être activée en option.
+            Cet assistant prépare votre serveur FHSE avec un environnement web complet pour installer FlatCMS en local.
+            La publication de votre site web se fera depuis l'administration de FlatCMS via Cloudflare Tunnel.
           </p>
 
           <div class="reassurance">
             <div class="mini-card">
-              <strong>Raspberry optimisé</strong>
-              <span>Conçu pour Raspberry Pi 4, Pi 400, Pi 5 et Pi 500.</span>
+              <strong>Matériel flexible</strong>
+              <span>Compatible Raspberry Pi, VM ARM64 et futures déclinaisons FHSE.</span>
             </div>
             <div class="mini-card">
               <strong>Accès local immédiat</strong>
@@ -591,8 +627,8 @@
               <span>Chaque étape prépare automatiquement votre serveur FlatCMS.</span>
             </div>
             <div class="mini-card">
-              <strong>Publication optionnelle</strong>
-              <span>Cloudflare Tunnel peut publier votre site sans ouvrir de ports sur votre box Internet.</span>
+              <strong>Publication depuis FlatCMS</strong>
+              <span>La mise en ligne publique se pilotera ensuite depuis l’administration de FlatCMS.</span>
             </div>
           </div>
 
@@ -610,19 +646,6 @@
           <p>Renseignez les informations de base. Par défaut, votre site sera accessible en local sur votre réseau.</p>
 
           <div class="form-grid">
-            <div>
-              <label>Nom du serveur</label>
-              <input id="serverName" value="fhse">
-            </div>
-            <div>
-              <label>Utilisateur FlatCMS</label>
-              <input id="adminUser" value="admin">
-            </div>
-            <div class="field-full">
-              <label>Email administrateur</label>
-              <input id="adminEmail" value="admin@example.com">
-            </div>
-
             <div class="field-full">
               <div class="accordion-card">
                 <h3>Accès technique Ubuntu</h3>
@@ -643,13 +666,48 @@
                   <span id="technicalAccessMode">Désactivé tant que le wizard n’a pas validé le mot de passe</span>
                 </div>
                 <div class="form-grid">
+                  <div class="field-full">
+                    <label>Nom du serveur</label>
+                    <input id="serverName" value="fhse">
+                    <div class="hint">
+                      Utilisé pour configurer le serveur web FHSE avant l’installation de FlatCMS.
+                    </div>
+                  </div>
                   <div>
                     <label>Nouveau mot de passe technique</label>
-                    <input id="technicalPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 caractères">
+                    <div class="password-input-shell">
+                      <input id="technicalPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 caractères">
+                      <button
+                        type="button"
+                        id="toggleTechnicalPassword"
+                        class="password-toggle secondary"
+                        aria-label="Afficher le mot de passe technique"
+                        title="Afficher le mot de passe technique"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label>Confirmer le mot de passe</label>
-                    <input id="technicalPasswordConfirm" type="password" autocomplete="new-password" placeholder="Retapez le mot de passe">
+                    <div class="password-input-shell">
+                      <input id="technicalPasswordConfirm" type="password" autocomplete="new-password" placeholder="Retapez le mot de passe">
+                      <button
+                        type="button"
+                        id="toggleTechnicalPasswordConfirm"
+                        class="password-toggle secondary"
+                        aria-label="Afficher la confirmation du mot de passe technique"
+                        title="Afficher la confirmation du mot de passe technique"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                   <div class="field-full">
                     <label class="checkline">
@@ -665,39 +723,8 @@
             </div>
 
             <div class="field-full">
-              <label class="checkline">
-                <input id="enableCloudflare" type="checkbox" onchange="toggleCloudflare();markFieldTouched('enableCloudflare')">
-                Publier mon site avec Cloudflare Tunnel
-              </label>
-              <div class="hint">
-                Sans Cloudflare Tunnel, FlatCMS restera accessible en local sur <code>http://fhse.local/</code>.
-              </div>
-            </div>
-
-            <div id="cloudflareBox" class="field-full hidden">
-              <div class="accordion-card">
-                <h3>Publication via Cloudflare Tunnel</h3>
-                <p>
-                  Grâce à Cloudflare Tunnel, votre site devient accessible depuis Internet sans ouvrir de ports sur votre box.
-                  Votre Raspberry Pi reste protégé sur votre réseau local, tandis que Cloudflare publie votre domaine de façon sécurisée.
-                </p>
-                <div class="form-grid">
-                  <div class="field-full">
-                    <label>Domaine public Cloudflare</label>
-                    <input id="domain" placeholder="exemple : mon-site.com" autocomplete="off">
-                    <div class="hint">
-                      Dans Cloudflare Tunnel, créez une application publiée vers <code>HTTP → localhost:80</code>, sans chemin.
-                    </div>
-                  </div>
-                  <div class="field-full">
-                    <label>Token Cloudflare Tunnel</label>
-                    <input id="cloudflareToken" type="password" placeholder="Collez ici le token complet fourni par Cloudflare" autocomplete="off">
-                    <div class="hint">
-                      Dans l’assistant Cloudflare, sélectionnez Debian pour récupérer le token d’installation.
-                      Ce choix fonctionne avec Ubuntu Server, utilisé par FHSE.
-                    </div>
-                  </div>
-                </div>
+              <div class="alert">
+                La publication de votre site web se fera depuis l'administration de FlatCMS via Cloudflare Tunnel.
               </div>
             </div>
           </div>
@@ -763,7 +790,7 @@
           <div class="subcard">
             <h3>Accès aaPanel</h3>
             <p class="muted-note">
-              FHSE relaie l’accès au panneau serveur avancé pour éviter les alertes de certificat local dans votre navigateur.
+              Accès direct au panneau serveur avancé aaPanel. Selon la configuration locale, votre navigateur peut afficher un avertissement de sécurité avant l’ouverture.
             </p>
             <div class="kv">
               <span>URL</span>
@@ -786,17 +813,9 @@
                 <button class="copy secondary" onclick="copyText(event, 'finalPanelPass')">Copier</button>
               </span>
             </div>
-            <details class="details-block">
-              <summary>Accès expert direct</summary>
-              <div class="hint">Lien technique de secours vers aaPanel. Réservé au dépannage avancé.</div>
-              <div class="kv">
-                <span>URL directe</span>
-                <span>
-                  <code id="finalPanelDirectUrl"></code>
-                  <button class="copy secondary" onclick="copyText(event, 'finalPanelDirectUrl')">Copier</button>
-                </span>
-              </div>
-            </details>
+            <div class="hint">
+              Si votre navigateur affiche une page d’avertissement locale, poursuivez manuellement vers aaPanel pour continuer l’administration serveur.
+            </div>
           </div>
 
           <div class="subcard">
@@ -836,7 +855,7 @@
             <div class="kv">
               <span>Mot de passe</span>
               <span class="muted-note" id="finalTechnicalNote">
-                Non affiché pour des raisons de sécurité. Il est défini dans le wizard FHSE.
+                Pour des raisons de sécurité, le mot de passe technique Ubuntu n’est jamais réaffiché. Utilisez celui que vous avez défini au début du wizard FHSE.
               </span>
             </div>
           </div>
@@ -882,24 +901,12 @@ function markFieldTouched(id) {
   }
 }
 
-function cleanDomain(value) {
-  return (value || '').trim().replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase();
-}
-
-function cloudflareEnabled() {
-  return !!byId('enableCloudflare')?.checked;
-}
-
 function technicalAccessState() {
   return Object.assign({}, technicalDefaults, statusPayload?.technical_access || {});
 }
 
 function technicalAccessConfigured() {
   return !!technicalAccessState().configured;
-}
-
-function toggleCloudflare() {
-  byId('cloudflareBox').classList.toggle('hidden', !cloudflareEnabled());
 }
 
 function updateTechnicalSelection() {
@@ -923,21 +930,42 @@ function updateTechnicalSelection() {
 }
 
 function configPayload() {
-  const enabled = cloudflareEnabled();
-
   return {
-    profile: 'raspberry-pi',
+    profile: 'mini-pc',
     server_name: byId('serverName').value || 'fhse',
     site_name: '',
-    access_mode: enabled ? 'cloudflare_tunnel' : 'local_only',
-    admin_email: byId('adminEmail').value || 'admin@example.com',
-    admin_user: byId('adminUser').value || 'admin',
-    domain: enabled ? cleanDomain(byId('domain').value) : '',
-    cloudflare_tunnel_token: enabled ? (byId('cloudflareToken').value || '').trim() : '',
     technical_password: byId('technicalPassword').value || '',
     technical_password_confirm: byId('technicalPasswordConfirm').value || '',
     enable_ssh_password_auth: !!byId('enableSshPasswordAuth')?.checked
   };
+}
+
+function setupPasswordToggle(toggleId, inputId, labels) {
+  const toggle = byId(toggleId);
+  const input = byId(inputId);
+  if (!toggle || !input) {
+    return;
+  }
+
+  const sync = () => {
+    const visible = input.type === 'text';
+    toggle.classList.toggle('is-active', visible);
+    toggle.setAttribute('aria-label', visible ? labels.hide : labels.show);
+    toggle.setAttribute('title', visible ? labels.hide : labels.show);
+  };
+
+  toggle.addEventListener('click', () => {
+    const selectionStart = input.selectionStart;
+    const selectionEnd = input.selectionEnd;
+    input.type = input.type === 'password' ? 'text' : 'password';
+    sync();
+    input.focus({preventScroll: true});
+    if (typeof selectionStart === 'number' && typeof selectionEnd === 'number') {
+      input.setSelectionRange(selectionStart, selectionEnd);
+    }
+  });
+
+  sync();
 }
 
 function showToast(text) {
@@ -989,16 +1017,6 @@ function validateConfig() {
     return false;
   }
 
-  if (config.access_mode === 'cloudflare_tunnel' && !config.domain) {
-    showToast('Domaine Cloudflare obligatoire');
-    return false;
-  }
-
-  if (config.access_mode === 'cloudflare_tunnel' && !config.cloudflare_tunnel_token) {
-    showToast('Token Cloudflare obligatoire');
-    return false;
-  }
-
   return true;
 }
 
@@ -1045,7 +1063,7 @@ function renderSidebar(steps) {
 
   [
     {n: 1, t: 'Accueil', s: 'Présentation', id: 'welcome'},
-    {n: 2, t: 'Configuration', s: 'Accès local, secours et Cloudflare', id: 'config'}
+    {n: 2, t: 'Configuration', s: 'Accès local et secours Ubuntu', id: 'config'}
   ].forEach((item) => {
     const css = currentPage === item.id
       ? 'active'
@@ -1216,9 +1234,7 @@ function renderFinal() {
 
   byId('finalFlatcms').href = configuration.flatcms_url || '#';
   byId('finalPanel').href = configuration.aapanel_url || '#';
-  byId('finalIntro').textContent = configuration.cloudflare_url
-    ? 'FlatCMS est installé et publié via Cloudflare Tunnel. Votre site est disponible sur votre domaine public. Le panneau serveur avancé est accessible ci-dessous.'
-    : 'FlatCMS est installé et disponible sur votre réseau local. Le panneau serveur avancé est accessible ci-dessous.';
+  byId('finalIntro').textContent = 'FlatCMS est installé et disponible sur votre réseau local. Le panneau serveur avancé aaPanel est accessible ci-dessous.';
 
   setCopyValue('finalPanelUrl', configuration.aapanel_url);
   setCopyValue('finalPanelDirectUrl', configuration.aapanel_direct_url);
@@ -1243,7 +1259,7 @@ function renderFinal() {
     technicalFallbackLink.title = 'Ouvrir cette connexion SSH de secours';
   }
   byId('finalTechnicalNote').textContent = configuration.technical_access_ready
-    ? 'Mot de passe déjà défini dans le wizard FHSE. Il n’est jamais réaffiché à l’écran.'
+    ? 'Pour des raisons de sécurité, le mot de passe technique Ubuntu n’est jamais réaffiché. Utilisez celui que vous avez défini au début du wizard FHSE.'
     : 'Mot de passe non configuré. Relancez le wizard FHSE pour l’appliquer.';
   byId('finalReport').textContent = Object.entries(statusPayload.report || {})
     .map(([key, value]) => `${key}=${value}`)
@@ -1404,7 +1420,14 @@ function exportReport() {
 }
 
 showPage(currentPage);
-toggleCloudflare();
+setupPasswordToggle('toggleTechnicalPassword', 'technicalPassword', {
+  show: 'Afficher le mot de passe technique',
+  hide: 'Masquer le mot de passe technique'
+});
+setupPasswordToggle('toggleTechnicalPasswordConfirm', 'technicalPasswordConfirm', {
+  show: 'Afficher la confirmation du mot de passe technique',
+  hide: 'Masquer la confirmation du mot de passe technique'
+});
 renderConfigPage();
 refreshStatus();
 setInterval(refreshStatus, 2500);

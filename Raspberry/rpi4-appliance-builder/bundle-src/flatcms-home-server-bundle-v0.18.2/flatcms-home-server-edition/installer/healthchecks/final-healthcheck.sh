@@ -7,6 +7,8 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 log "Running final healthcheck."
 
+LOCAL_IP="$(detect_local_ipv4)"
+
 if systemctl is-active --quiet ssh; then
   write_report_value "CHECK_SSH" "ok"
 else
@@ -53,13 +55,16 @@ else
   write_report_value "CHECK_PURE_FTPD" "skipped"
 fi
 
-LOCAL_IP="$(detect_local_ipv4)"
 HTTP_URL="http://127.0.0.1/"
 HTTP_HEADERS="$(mktemp)"
 HTTP_BODY="$(mktemp)"
 FLATCMS_ROUTE_STATUS="unknown"
 FLATCMS_MDNS_ROUTE_STATUS="unknown"
 FLATCMS_DOMAIN_ROUTE_STATUS="skipped"
+WEB_ROOT="${FLATCMS_WEB_ROOT:-/www/wwwroot/default}"
+PUBLIC_ROOT="${FLATCMS_PUBLIC_ROOT:-$WEB_ROOT/public}"
+FHSE_CAPABILITIES_PATH="${FHSE_CAPABILITIES_PATH:-/etc/fhse/capabilities.json}"
+FHSE_SENTINEL_PATH="${FHSE_SENTINEL_PATH:-$WEB_ROOT/.fhse-flatcms-instance.json}"
 
 check_flatcms_host() {
   local host="$1"
@@ -122,6 +127,22 @@ else
   write_report_value "CHECK_HTTP_LOOPBACK" "failed"
 fi
 
+if [ -r "$FHSE_CAPABILITIES_PATH" ]; then
+  write_report_value "CHECK_FHSE_CAPABILITIES" "ok"
+else
+  write_report_value "CHECK_FHSE_CAPABILITIES" "missing"
+fi
+
+if [ -f "$PUBLIC_ROOT/index.php" ] && [ -d "$WEB_ROOT/app" ] && [ -d "$WEB_ROOT/themes" ]; then
+  if [ -r "$FHSE_SENTINEL_PATH" ]; then
+    write_report_value "CHECK_FHSE_SENTINEL" "ok"
+  else
+    write_report_value "CHECK_FHSE_SENTINEL" "missing"
+  fi
+else
+  write_report_value "CHECK_FHSE_SENTINEL" "skipped"
+fi
+
 rm -f "$HTTP_HEADERS" "$HTTP_BODY"
 
 if [ "$FLATCMS_ROUTE_STATUS" != "ok" ]; then
@@ -132,14 +153,12 @@ if [ "$FLATCMS_MDNS_ROUTE_STATUS" != "ok" ]; then
   fail "FlatCMS mDNS route is not reachable through Host: fhse.local. aaPanel binding or vhost routing is not aligned."
 fi
 
-if [ "${FLATCMS_ACCESS_MODE:-local_only}" = "cloudflare_tunnel" ]; then
-  if ! grep -q "^CLOUDFLARE_TUNNEL_STATUS=active$" "$FHS_REPORT_PATH" 2>/dev/null; then
-    fail "Cloudflare Tunnel is not active."
-  fi
+if [ ! -r "$FHSE_CAPABILITIES_PATH" ]; then
+  fail "FHSE capabilities file is missing: $FHSE_CAPABILITIES_PATH"
+fi
 
-  if [ -n "${FLATCMS_DOMAIN:-}" ] && [ "$FLATCMS_DOMAIN_ROUTE_STATUS" != "ok" ]; then
-    fail "FlatCMS domain host route is not reachable locally through Host: ${FLATCMS_DOMAIN}."
-  fi
+if [ -f "$PUBLIC_ROOT/index.php" ] && [ -d "$WEB_ROOT/app" ] && [ -d "$WEB_ROOT/themes" ] && [ ! -r "$FHSE_SENTINEL_PATH" ]; then
+  fail "FHSE FlatCMS sentinel is missing: $FHSE_SENTINEL_PATH"
 fi
 
 log "Final healthcheck completed."

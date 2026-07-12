@@ -1,6 +1,10 @@
 # VM Releases
 
-Future VM release metadata will be stored here.
+This folder stores VM-facing FHSE release artifacts.
+
+Actual generated VM binaries are stored locally in:
+
+- `images/VM/`
 
 Expected contents per version:
 
@@ -8,4 +12,3 @@ Expected contents per version:
 - release notes
 - checksum
 - validation notes
-

@@ -23,6 +23,11 @@ AAPANEL_VHOST_DIR="/www/server/panel/vhost/nginx"
 AAPANEL_REWRITE_DIR="/www/server/panel/vhost/rewrite"
 FLATCMS_VHOST="$AAPANEL_VHOST_DIR/${VHOST_SAFE_NAME}.conf"
 FLATCMS_REWRITE="$AAPANEL_REWRITE_DIR/${VHOST_SAFE_NAME}.conf"
+FHSE_VERSION="${FHSE_VERSION:-0.18.2-rpi4.1-rc3.12}"
+FHSE_PROFILE="${FLATCMS_PROFILE:-mini-pc}"
+FHSE_CAP_DIR="${FHSE_CAP_DIR:-/etc/fhse}"
+FHSE_CAPABILITIES_PATH="${FHSE_CAPABILITIES_PATH:-$FHSE_CAP_DIR/capabilities.json}"
+FHSE_SENTINEL_PATH="${FHSE_SENTINEL_PATH:-$WEB_ROOT/.fhse-flatcms-instance.json}"
 
 copy_tree_into_webroot() {
   local source_dir="$1"
@@ -30,6 +35,98 @@ copy_tree_into_webroot() {
   # Important: keep /www/wwwroot/default itself in place.
   # aaPanel binds its Website record to this path; moving it breaks routing.
   (shopt -s dotglob nullglob && cp -a "$source_dir"/* "$WEB_ROOT"/)
+}
+
+flatcms_runtime_detected() {
+  [ -f "$PUBLIC_ROOT/index.php" ] \
+    && [ -d "$WEB_ROOT/app" ] \
+    && [ -d "$WEB_ROOT/themes" ] \
+    && [ -d "$WEB_ROOT/data" ]
+}
+
+write_flatcms_sentinel() {
+  local installed_at="$1"
+  mkdir -p "$(dirname "$FHSE_SENTINEL_PATH")"
+  python3 - "$FHSE_SENTINEL_PATH" "$FHSE_VERSION" "$FHSE_PROFILE" "$WEB_ROOT" "$PUBLIC_ROOT" "$SITE_NAME" "$installed_at" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+payload = {
+    "product": "FlatCMS",
+    "fhse_managed": True,
+    "fhse_version": sys.argv[2],
+    "profile": sys.argv[3],
+    "web_root": sys.argv[4],
+    "public_root": sys.argv[5],
+    "site_name": sys.argv[6],
+    "installed_at": sys.argv[7],
+}
+path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+  chmod 0644 "$FHSE_SENTINEL_PATH"
+}
+
+write_fhse_capabilities() {
+  local detected="$1"
+  local status="$2"
+  mkdir -p "$FHSE_CAP_DIR"
+  python3 - "$FHSE_CAPABILITIES_PATH" "$FHSE_VERSION" "$FHSE_PROFILE" "$WEB_ROOT" "$PUBLIC_ROOT" "$FHSE_SENTINEL_PATH" "$detected" "$status" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+flatcms_detected = sys.argv[7] == "1"
+payload = {
+    "fhse": True,
+    "version": sys.argv[2],
+    "profile": sys.argv[3],
+    "features": {
+        "cloudflare_tunnel": {
+            "supported": True,
+            "configured": False,
+            "active": False,
+            "allowed": flatcms_detected,
+            "mode": "token",
+            "requires_flatcms": True,
+        }
+    },
+    "flatcms": {
+        "detected": flatcms_detected,
+        "status": sys.argv[8],
+        "web_root": sys.argv[4],
+        "public_root": sys.argv[5],
+        "sentinel": sys.argv[6],
+    },
+}
+path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+  chmod 0644 "$FHSE_CAPABILITIES_PATH"
+}
+
+refresh_fhse_publication_contract() {
+  local installed_at detected status
+  installed_at="$(date -Is)"
+  detected="0"
+  status="flatcms_missing"
+
+  if flatcms_runtime_detected; then
+    detected="1"
+    status="flatcms_detected"
+    write_flatcms_sentinel "$installed_at"
+  else
+    rm -f "$FHSE_SENTINEL_PATH"
+  fi
+
+  write_fhse_capabilities "$detected" "$status"
+
+  write_report_value "FHSE_VERSION" "$FHSE_VERSION"
+  write_report_value "FHSE_PROFILE" "$FHSE_PROFILE"
+  write_report_value "FHSE_CAPABILITIES_PATH" "$FHSE_CAPABILITIES_PATH"
+  write_report_value "FHSE_SENTINEL_PATH" "$FHSE_SENTINEL_PATH"
+  write_report_value "FHSE_FLATCMS_DETECTED" "$([ "$detected" = "1" ] && printf 'yes' || printf 'no')"
 }
 
 if [ -n "$PACKAGE_ZIP" ] && [ -f "$PACKAGE_ZIP" ]; then
@@ -84,6 +181,8 @@ if [ -f "$WEB_ROOT/.env.example" ] && [ ! -f "$WEB_ROOT/.env.local" ]; then
   sed -i "s#^APP_DEBUG=.*#APP_DEBUG=false#" "$WEB_ROOT/.env.local" || true
   sed -i "s#^APP_URL=.*#APP_URL=http://fhse.local#" "$WEB_ROOT/.env.local" || true
 fi
+
+refresh_fhse_publication_contract
 
 if id "$WEB_USER" >/dev/null 2>&1 && getent group "$WEB_GROUP" >/dev/null 2>&1; then
   chown -R "$WEB_USER:$WEB_GROUP" "$WEB_ROOT" 2>/dev/null || true

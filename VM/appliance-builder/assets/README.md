@@ -1,10 +1,10 @@
 # VM Builder Assets
 
-Generated target-local assets can be staged here during the VM appliance build workflow.
+This folder contains the small assets used by the VM ARM64 ISO builder:
 
-This folder is intentionally kept light in Git.
+- generated FHSE bundle archive:
+  - `flatcms-home-server-bundle-v0.18.2-no-builders.zip`
+- target-side helper copied into the ISO:
+  - `install-fhse-target.sh`
 
-Expected generated file later:
-
-- `flatcms-home-server-bundle-v0.18.2-no-builders.zip`
-
+The generated bundle archive stays lightweight enough for local staging, but final VM binaries are written to `images/VM/` outside Git.

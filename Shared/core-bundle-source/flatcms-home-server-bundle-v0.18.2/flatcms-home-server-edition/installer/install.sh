@@ -38,7 +38,6 @@ run_step "$SCRIPT_DIR/steps/03b-install-nginx.sh"
 run_step "$SCRIPT_DIR/steps/03c-install-php.sh"
 run_step "$SCRIPT_DIR/steps/04a-create-aapanel-site.sh"
 run_step "$SCRIPT_DIR/steps/04b-install-flatcms.sh"
-run_step "$SCRIPT_DIR/steps/05-configure-cloudflare-placeholder.sh"
 run_step "$SCRIPT_DIR/steps/06-final-report.sh"
 
 run_step "$SCRIPT_DIR/healthchecks/final-healthcheck.sh"

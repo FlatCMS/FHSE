@@ -1,4 +1,4 @@
-# FlatCMS Home Server Edition — Raspberry Pi image rc3.11
+# FlatCMS Home Server Edition — Raspberry Pi image rc3.12
 
 Objectif : fournir une image prête à flasher avec Raspberry Pi Imager.
 
@@ -8,7 +8,7 @@ Objectif : fournir une image prête à flasher avec Raspberry Pi Imager.
 2. Ouvrir Raspberry Pi Imager.
 3. Choisir le modèle Raspberry Pi.
 4. Choisir `Utiliser une image personnalisée`.
-5. Sélectionner `fhse-rpi4-v0.18.2-rpi4.1-rc3.11.img` ou `.img.xz`.
+5. Sélectionner `fhse-rpi4-v0.18.2-rpi4.1-rc3.12.img` ou `.img.xz`.
 6. Flasher le SSD ou la carte SD.
 7. Brancher le support sur le Raspberry Pi en Ethernet.
 8. Attendre quelques minutes.

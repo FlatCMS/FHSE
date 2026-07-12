@@ -6,11 +6,23 @@ import os
 import re
 import shlex
 import signal
+import ssl
 import subprocess
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, urlsplit, urlunsplit
+
+from fhse_cloudflare import (
+    FhseApiError,
+    configure_tunnel,
+    current_capabilities,
+    disable_tunnel,
+    enable_tunnel,
+    is_loopback_address,
+    restart_tunnel,
+    tunnel_status,
+)
 
 
 BUNDLE_DIR = Path(__file__).resolve().parents[1]
@@ -32,6 +44,7 @@ CREDENTIALS_PATH = LOG_DIR / "aapanel-credentials.env"
 STEP_LOG_DIR = LOG_DIR / "steps"
 ISSUE_PATH = Path("/etc/issue.d/fhse.issue")
 SSH_PASSWORD_CONFIG_PATH = Path("/etc/ssh/sshd_config.d/99-fhse-password-auth.conf")
+AAPANEL_SSL_FLAG = Path("/www/server/panel/data/ssl.pl")
 
 TECHNICAL_ACCESS_USER = "admin"
 MIN_TECHNICAL_PASSWORD_LENGTH = 8
@@ -129,10 +142,10 @@ PRODUCT_STEPS = [
         "title": "Vérifications finales",
         "subtitle": "Création du rapport",
         "headline": "Vérifications finales",
-        "description": "FHSE finalise la configuration, vérifie l’accès local, configure Cloudflare Tunnel si vous l’avez activé, puis génère le rapport final de l’installation.",
+        "description": "FHSE finalise la configuration, vérifie l’accès local puis génère le rapport final de l’installation.",
         "success": "Le rapport final est créé.",
         "action": "Finaliser",
-        "scripts": ["steps/05-configure-cloudflare-placeholder.sh", "steps/06-final-report.sh", "healthchecks/final-healthcheck.sh"],
+        "scripts": ["steps/06-final-report.sh", "healthchecks/final-healthcheck.sh"],
     },
 ]
 STEP_MAP = {step["id"]: step for step in PRODUCT_STEPS}
@@ -198,14 +211,48 @@ def first_local_ip():
     return "127.0.0.1"
 
 
-def rebuild_local_url(url, scheme="http"):
+def normalize_local_aapanel_url(url):
+    local_ip = first_local_ip()
+    if not url or not local_ip:
+        return url
+    parsed = urlsplit(url)
+    if not parsed.scheme or not parsed.netloc:
+        return url
+    port = f":{parsed.port}" if parsed.port else ""
+    path = parsed.path or ""
+    if parsed.query:
+        path = f"{path}?{parsed.query}"
+    if parsed.fragment:
+        path = f"{path}#{parsed.fragment}"
+    return f"{parsed.scheme}://{local_ip}{port}{path}"
+
+
+def aapanel_panel_ssl_enabled(report=None):
+    if AAPANEL_SSL_FLAG.exists():
+        return True
+    if report and str(report.get("AAPANEL_PANEL_SSL", "")).strip().lower() == "enabled":
+        return True
+    return False
+
+
+def enforce_local_aapanel_url_scheme(url, report=None):
+    normalized = normalize_local_aapanel_url(url)
+    if not normalized:
+        return normalized
+    if not aapanel_panel_ssl_enabled(report) and normalized.startswith("https://"):
+        return f"http://{normalized[len('https://'):]}"
+    return normalized
+
+
+def rebuild_local_url(url, scheme=None):
     local_ip = first_local_ip()
     if not url:
         return ""
     match = re.match(r"^(https?://)(\[[^]]+\]|[^/:]+)(:\d+)?(/.*)?$", url)
     if not match:
         return url
-    return f"{scheme}://{local_ip}{match.group(3) or ''}{match.group(4) or ''}"
+    target_scheme = scheme or match.group(1).rstrip("://")
+    return f"{target_scheme}://{local_ip}{match.group(3) or ''}{match.group(4) or ''}"
 
 
 def aapanel_proxy_url():
@@ -216,7 +263,7 @@ def aapanel_backend_context(credentials=None, report=None):
     credentials = credentials or refresh_credentials()
     report = report or read_env_file(REPORT_PATH)
     backend_url = credentials.get("AAPANEL_URL") or report.get("AAPANEL_URL", "")
-    backend_url = rebuild_local_url(backend_url, scheme="http")
+    backend_url = enforce_local_aapanel_url_scheme(backend_url, report)
     if not backend_url:
         return {}
 
@@ -240,8 +287,21 @@ def aapanel_backend_context(credentials=None, report=None):
 
 def build_aapanel_target_path(request_path, context):
     parsed = urlsplit(request_path)
-    suffix = parsed.path[len(AAPANEL_PROXY_PREFIX):]
-    backend_path = f"{context['base_path']}{suffix}" if suffix else context["base_path"]
+    public_prefix = context["public_prefix"]
+    request_only_path = parsed.path or "/"
+
+    if request_only_path == public_prefix or request_only_path.startswith(f"{public_prefix}/"):
+        suffix = request_only_path[len(public_prefix):]
+    else:
+        suffix = request_only_path
+
+    if suffix == "":
+        suffix = "/"
+    elif not suffix.startswith("/"):
+        suffix = f"/{suffix}"
+
+    backend_base = context["base_path"]
+    backend_path = f"{backend_base}{suffix}" if backend_base else suffix
     if not backend_path:
         backend_path = "/"
     query = f"?{parsed.query}" if parsed.query else ""
@@ -255,11 +315,17 @@ def rewrite_aapanel_location(location, context):
     public_prefix = context["public_prefix"]
     backend_origin = context["origin"]
     backend_base = context["base_path"]
+    origin_variants = [
+        backend_origin,
+        f"http://{context['netloc']}",
+        f"https://{context['netloc']}",
+    ]
 
-    if location.startswith(f"{backend_origin}{backend_base}/"):
-        return f"{public_prefix}{location[len(backend_origin + backend_base):]}"
-    if backend_base and location == f"{backend_origin}{backend_base}":
-        return f"{public_prefix}/"
+    for origin in origin_variants:
+        if location.startswith(f"{origin}{backend_base}/"):
+            return f"{public_prefix}{location[len(origin + backend_base):]}"
+        if backend_base and location == f"{origin}{backend_base}":
+            return f"{public_prefix}/"
     if backend_base and location.startswith(f"{backend_base}/"):
         return f"{public_prefix}{location[len(backend_base):]}"
     if backend_base and location == backend_base:
@@ -277,6 +343,9 @@ def rewrite_aapanel_cookie(cookie_value, context):
     rewritten = re.sub(r"(?i)\bPath=[^;]*", f"Path={public_path}", cookie_value)
     if "path=" not in cookie_value.lower():
         rewritten = f"{rewritten}; Path={public_path}"
+    rewritten = re.sub(r"(?i);\s*Domain=[^;]*", "", rewritten)
+    if context["scheme"] != "https":
+        rewritten = re.sub(r"(?i);\s*Secure", "", rewritten)
     return rewritten
 
 
@@ -289,32 +358,90 @@ def rewrite_aapanel_body(text, context):
     backend_origin = context["origin"]
     backend_base = context["base_path"]
     public_prefix = context["public_prefix"]
+    origin_variants = [
+        backend_origin,
+        f"http://{context['netloc']}",
+        f"https://{context['netloc']}",
+    ]
 
     replacements = []
     if backend_base:
+        for origin in origin_variants:
+            replacements.extend([
+                (f"{origin}{backend_base}/", f"{public_prefix}/"),
+                (f"{origin}{backend_base}", public_prefix),
+            ])
         replacements.extend([
-            (f"{backend_origin}{backend_base}/", f"{public_prefix}/"),
-            (f"{backend_origin}{backend_base}", public_prefix),
             (f'"{backend_base}/', f'"{public_prefix}/'),
             (f"'{backend_base}/", f"'{public_prefix}/"),
             (f"({backend_base}/", f"({public_prefix}/"),
             (f"{backend_base}/", f"{public_prefix}/"),
         ])
 
-    replacements.extend([
-        (f"{backend_origin}/", f"{public_prefix}/"),
-        (backend_origin, public_prefix),
-    ])
+    for origin in origin_variants:
+        replacements.extend([
+            (f"{origin}/", f"{public_prefix}/"),
+            (origin, public_prefix),
+        ])
 
     for source, target in replacements:
         text = text.replace(source, target)
 
+    # Rewrite root-relative aaPanel asset and route references to the public proxy prefix.
+    root_relative_patterns = [
+        (
+            re.compile(r'((?:href|src|action|poster)=["\'])/(?!/|server/)'),
+            rf"\1{public_prefix}/",
+        ),
+        (
+            re.compile(r'(url\((?:["\']?))\/(?!/|server/)'),
+            rf"\1{public_prefix}/",
+        ),
+        (
+            re.compile(r'((?:fetch|axios\.(?:get|post|put|patch|delete)|open)\(\s*["\'])/(?!/|server/)'),
+            rf"\1{public_prefix}/",
+        ),
+        (
+            re.compile(r'((?:location(?:\.href)?|window\.location(?:\.href)?)\s*=\s*["\'])/(?!/|server/)'),
+            rf"\1{public_prefix}/",
+        ),
+        (
+            re.compile(r'((?:window\.open|location\.replace)\(\s*["\'])/(?!/|server/)'),
+            rf"\1{public_prefix}/",
+        ),
+    ]
+
+    for pattern, replacement in root_relative_patterns:
+        text = pattern.sub(replacement, text)
+
     return text
+
+
+def should_proxy_aapanel_request(request_path, headers):
+    path = urlparse(request_path).path
+    if path == "/" or path.startswith("/api/"):
+        return False
+
+    if path == AAPANEL_PROXY_PREFIX or path.startswith(f"{AAPANEL_PROXY_PREFIX}/"):
+        return True
+
+    referer = headers.get("Referer", "") or headers.get("referer", "")
+    if referer:
+        referer_path = urlparse(referer).path
+        if referer_path == AAPANEL_PROXY_PREFIX or referer_path.startswith(f"{AAPANEL_PROXY_PREFIX}/"):
+            return True
+
+    # aaPanel triggers root-relative requests that do not always preserve a Referer
+    # path, especially after login or when toggling locale. The wizard owns only `/`
+    # and `/api/*`, so every other route should fall through to the aaPanel proxy when
+    # the backend is available.
+    return bool(aapanel_backend_context())
 
 
 def parse_aapanel_info(text):
     data = {}
     urls = []
+    report = read_env_file(REPORT_PATH)
     local_ip = first_local_ip()
     for line in text.splitlines():
         stripped = ANSI_RE.sub("", line).strip()
@@ -336,7 +463,7 @@ def parse_aapanel_info(text):
             data["AAPANEL_PASSWORD"] = stripped.split(":", 1)[-1].strip()
     if urls:
         urls.sort(key=lambda item: item[0])
-        data["AAPANEL_URL"] = rebuild_local_url(urls[-1][1])
+        data["AAPANEL_URL"] = enforce_local_aapanel_url_scheme(urls[-1][1], report)
     return {k: v for k, v in data.items() if v}
 
 
@@ -354,6 +481,14 @@ def save_credentials(credentials):
 
 def refresh_credentials():
     credentials = read_env_file(CREDENTIALS_PATH)
+    if credentials.get("AAPANEL_URL"):
+        normalized_url = enforce_local_aapanel_url_scheme(
+            credentials["AAPANEL_URL"],
+            read_env_file(REPORT_PATH),
+        )
+        if normalized_url != credentials["AAPANEL_URL"]:
+            credentials["AAPANEL_URL"] = normalized_url
+            save_credentials(credentials)
     if credentials.get("AAPANEL_URL") and credentials.get("AAPANEL_USERNAME") and credentials.get("AAPANEL_PASSWORD"):
         return credentials
     if os.geteuid() != 0:
@@ -653,23 +788,14 @@ def write_runtime_config(payload):
 
     local_ip = payload.get("local_ip") or first_local_ip()
     site_name = payload.get("site_name") or local_ip
-    access_mode = str(payload.get("access_mode") or "local_only").strip()
-    if access_mode not in ("local_only", "cloudflare_tunnel"):
-        access_mode = "local_only"
-    domain = str(payload.get("domain") or "").strip().lower().replace("https://", "").replace("http://", "").strip("/")
-    token = str(payload.get("cloudflare_tunnel_token") or "").strip().replace("\r", "").replace("\n", "")
 
     config.update(
         {
-            "FLATCMS_PROFILE": "raspberry-pi",
+            "FLATCMS_PROFILE": payload.get("profile", "mini-pc") or "mini-pc",
             "FLATCMS_SERVER_NAME": payload.get("server_name", "fhse"),
-            "FLATCMS_ADMIN_EMAIL": payload.get("admin_email", "admin@example.com"),
-            "FLATCMS_ADMIN_USER": payload.get("admin_user", "admin"),
             "FLATCMS_TECHNICAL_ACCESS_USER": TECHNICAL_ACCESS_USER,
             "FLATCMS_SSH_PASSWORD_AUTH": "1" if normalize_bool(payload.get("enable_ssh_password_auth"), False) else "0",
-            "FLATCMS_ACCESS_MODE": access_mode,
-            "FLATCMS_CLOUDFLARE_TUNNEL_TOKEN": token,
-            "FLATCMS_DOMAIN": domain,
+            "FLATCMS_ACCESS_MODE": "local_only",
             "FLATCMS_SITE_NAME": site_name,
             "FLATCMS_PACKAGE_ZIP": str(PACKAGE_ZIP),
             "FLATCMS_INSTALL_PURE_FTPD": "0",
@@ -718,13 +844,7 @@ def completed_from_report(step_id, report):
     if step_id == "flatcms":
         return report.get("FLATCMS_STATUS") in ("package-deployed", "placeholder-ready")
     if step_id == "checks":
-        access_mode = read_env_file(RUNTIME_CONFIG).get("FLATCMS_ACCESS_MODE", "local_only") if RUNTIME_CONFIG.exists() else "local_only"
-        cloudflare_ok = True
-        if access_mode == "cloudflare_tunnel":
-            cloudflare_ok = report.get("CLOUDFLARE_TUNNEL_STATUS") == "active" and report.get("CHECK_CLOUDFLARED") == "ok"
-        else:
-            cloudflare_ok = report.get("CLOUDFLARE_TUNNEL_STATUS") in ("skipped", "") and report.get("CHECK_CLOUDFLARED") in ("skipped", "")
-        return report.get("CHECK_HTTP_LOCAL") == "ok" and report.get("CHECK_FLATCMS_ROUTE") == "ok" and cloudflare_ok
+        return report.get("CHECK_HTTP_LOCAL") == "ok" and report.get("CHECK_FLATCMS_ROUTE") == "ok"
     return False
 
 
@@ -781,17 +901,13 @@ def next_pending_step(steps):
 
 def build_configuration(report, credentials):
     local_ip = first_local_ip()
-    domain = read_env_file(RUNTIME_CONFIG).get("FLATCMS_DOMAIN", "") if RUNTIME_CONFIG.exists() else ""
-    public_url = f"https://{domain}/" if domain else ""
     technical_access = technical_access_from_state()
     aapanel_context = aapanel_backend_context(credentials, report)
     aapanel_direct_url = aapanel_context.get("backend_url", "")
     return {
-        "flatcms_url": public_url or report.get("FLATCMS_PRIMARY_URL") or report.get("FLATCMS_MDNS_URL") or "http://fhse.local/",
-        "cloudflare_url": public_url,
-        "domain": domain,
+        "flatcms_url": report.get("FLATCMS_PRIMARY_URL") or report.get("FLATCMS_MDNS_URL") or "http://fhse.local/",
         "flatcms_fallback_url": report.get("FLATCMS_LOCAL_URL") or f"http://{local_ip}/",
-        "aapanel_url": aapanel_proxy_url() if aapanel_direct_url else "",
+        "aapanel_url": aapanel_direct_url,
         "aapanel_direct_url": aapanel_direct_url,
         "aapanel_username": credentials.get("AAPANEL_USERNAME", ""),
         "aapanel_password": credentials.get("AAPANEL_PASSWORD", ""),
@@ -942,7 +1058,7 @@ def start_step(step_id, payload):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "FlatCMSInstaller/0.18.2-rc3.11"
+    server_version = "FlatCMSInstaller/0.18.2-rc3.12"
 
     def log_message(self, fmt, *args):
         return
@@ -978,6 +1094,16 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length).decode("utf-8")
         return json.loads(raw) if raw.strip() else {}
 
+    def require_loopback(self):
+        if is_loopback_address(self.client_address[0]):
+            return True
+
+        self.send_json({
+            "ok": False,
+            "error": "fhse_api_loopback_only",
+        }, 403)
+        return False
+
     def proxy_aapanel(self):
         context = aapanel_backend_context()
         if not context:
@@ -1008,7 +1134,16 @@ class Handler(BaseHTTPRequestHandler):
         forwarded_headers["X-Forwarded-Proto"] = "http"
         forwarded_headers["X-Forwarded-For"] = self.client_address[0]
 
-        connection = http.client.HTTPConnection(context["host"], context["port"], timeout=30)
+        if context["scheme"] == "https":
+            ssl_context = ssl._create_unverified_context()
+            connection = http.client.HTTPSConnection(
+                context["host"],
+                context["port"],
+                timeout=30,
+                context=ssl_context,
+            )
+        else:
+            connection = http.client.HTTPConnection(context["host"], context["port"], timeout=30)
         response = None
         rewritten_body = False
 
@@ -1057,21 +1192,38 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         path = urlparse(self.path).path
-        if path == AAPANEL_PROXY_PREFIX or path.startswith(f"{AAPANEL_PROXY_PREFIX}/"):
+        if should_proxy_aapanel_request(self.path, self.headers):
             self.proxy_aapanel()
             return
         if path.startswith("/api/"):
-            self.send_response(200 if path in ("/api/status", "/api/log", "/api/report", "/api/credentials") else 404)
+            known_paths = (
+                "/api/status",
+                "/api/log",
+                "/api/report",
+                "/api/credentials",
+                "/api/fhse/capabilities",
+                "/api/fhse/cloudflare/tunnel/status",
+                "/api/fhse/cloudflare/tunnel/configure",
+                "/api/fhse/cloudflare/tunnel/enable",
+                "/api/fhse/cloudflare/tunnel/disable",
+                "/api/fhse/cloudflare/tunnel/restart",
+            )
+            self.send_response(200 if path in known_paths else 404)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
             return
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
+        if path == "/":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            return
+        self.send_response(404)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
         self.end_headers()
 
     def do_GET(self):
         path = urlparse(self.path).path
-        if path == AAPANEL_PROXY_PREFIX or path.startswith(f"{AAPANEL_PROXY_PREFIX}/"):
+        if should_proxy_aapanel_request(self.path, self.headers):
             self.proxy_aapanel()
             return
         if path == "/api/status":
@@ -1090,26 +1242,29 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/credentials":
             self.send_json(refresh_credentials())
             return
-        if path == "/" or not path.startswith("/api/"):
+        if path == "/api/fhse/capabilities":
+            if not self.require_loopback():
+                return
+            self.send_json({"ok": True, "capabilities": current_capabilities(enforce_guard=True)})
+            return
+        if path == "/api/fhse/cloudflare/tunnel/status":
+            if not self.require_loopback():
+                return
+            self.send_json({"ok": True, **tunnel_status()})
+            return
+        if path == "/":
             self.send_text(INDEX_HTML.read_text(encoding="utf-8"), "text/html; charset=utf-8")
             return
         self.send_json({"error": "Not found"}, 404)
 
     def do_POST(self):
         path = urlparse(self.path).path
-        if path == AAPANEL_PROXY_PREFIX or path.startswith(f"{AAPANEL_PROXY_PREFIX}/"):
+        if should_proxy_aapanel_request(self.path, self.headers):
             self.proxy_aapanel()
             return
         try:
             payload = self.read_json_body()
             if path == "/api/configure":
-                access_mode = str((payload or {}).get("access_mode", "local_only")).strip()
-                domain = str((payload or {}).get("domain", "")).strip()
-                token = str((payload or {}).get("cloudflare_tunnel_token", "")).strip()
-                if access_mode == "cloudflare_tunnel" and not domain:
-                    raise RuntimeError("Le domaine public Cloudflare est obligatoire.")
-                if access_mode == "cloudflare_tunnel" and not token:
-                    raise RuntimeError("Le token Cloudflare Tunnel est obligatoire.")
                 apply_technical_access(payload or {})
                 runtime = write_runtime_config(payload or {})
                 self.send_json({"ok": True, "runtime_config": str(runtime), "status": product_payload()})
@@ -1117,9 +1272,6 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/run-step":
                 step_id = payload.get("step_id", "")
                 cfg = payload.get("config", {}) or {}
-                access_mode = str(cfg.get("access_mode", "local_only")).strip()
-                if access_mode == "cloudflare_tunnel" and (not str(cfg.get("domain", "")).strip() or not str(cfg.get("cloudflare_tunnel_token", "")).strip()):
-                    raise RuntimeError("Domaine public et token Cloudflare obligatoires.")
                 apply_technical_access(cfg)
                 pid = start_step(step_id, cfg)
                 self.send_json({"ok": True, "pid": pid, "step_id": step_id, "status": product_payload()})
@@ -1130,27 +1282,49 @@ class Handler(BaseHTTPRequestHandler):
                 reset_run_files()
                 self.send_json({"ok": True, "status": product_payload()})
                 return
+            if path == "/api/fhse/cloudflare/tunnel/configure":
+                if not self.require_loopback():
+                    return
+                self.send_json({"ok": True, **configure_tunnel(payload or {})})
+                return
+            if path == "/api/fhse/cloudflare/tunnel/enable":
+                if not self.require_loopback():
+                    return
+                self.send_json({"ok": True, **enable_tunnel(payload or {})})
+                return
+            if path == "/api/fhse/cloudflare/tunnel/disable":
+                if not self.require_loopback():
+                    return
+                self.send_json({"ok": True, **disable_tunnel()})
+                return
+            if path == "/api/fhse/cloudflare/tunnel/restart":
+                if not self.require_loopback():
+                    return
+                self.send_json({"ok": True, **restart_tunnel(payload or {})})
+                return
             self.send_json({"error": "Not found"}, 404)
+        except FhseApiError as exc:
+            self.send_json({"ok": False, "error": exc.code, "details": exc.details}, exc.status)
         except Exception as exc:
             self.send_json({"ok": False, "error": str(exc), "status": product_payload()}, 500)
 
     def do_PUT(self):
         path = urlparse(self.path).path
-        if path == AAPANEL_PROXY_PREFIX or path.startswith(f"{AAPANEL_PROXY_PREFIX}/"):
+        if should_proxy_aapanel_request(self.path, self.headers):
             self.proxy_aapanel()
             return
         self.send_json({"error": "Not found"}, 404)
 
     def do_PATCH(self):
         path = urlparse(self.path).path
-        if path == AAPANEL_PROXY_PREFIX or path.startswith(f"{AAPANEL_PROXY_PREFIX}/"):
+        if should_proxy_aapanel_request(self.path, self.headers):
             self.proxy_aapanel()
             return
         self.send_json({"error": "Not found"}, 404)
 
     def do_DELETE(self):
         path = urlparse(self.path).path
-        if path == AAPANEL_PROXY_PREFIX or path.startswith(f"{AAPANEL_PROXY_PREFIX}/"):
+        if should_proxy_aapanel_request(self.path, self.headers):
             self.proxy_aapanel()
             return
         self.send_json({"error": "Not found"}, 404)

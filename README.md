@@ -6,6 +6,10 @@ This repository is intended to host the platform-specific builders, deployment a
 
 ## Current layout
 
+- `images/`
+  - local binary drop zone for generated FHSE images
+  - centralizes future `.img`, `.img.xz`, `.iso`, `.qcow2`, `.ova`
+  - intentionally excluded from Git
 - `Raspberry/`
   - first tracked target
   - Raspberry Pi 4 / 400 appliance builder
@@ -23,7 +27,7 @@ This repository is intended to host the platform-specific builders, deployment a
 
 - keep source, scripts, docs, and small traceability artifacts in Git
 - do not commit generated disk images such as `.img`, `.img.xz`, `.iso`, `.qcow2`, or `.ova`
-- keep release binaries outside Git or publish them as GitHub release assets later
+- keep generated binaries in `images/` locally or publish them later as GitHub release assets
 
 ## Current tracked target
 

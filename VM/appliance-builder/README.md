@@ -2,39 +2,61 @@
 
 ## Objective
 
-Produce ready-to-import FHSE virtual appliances.
+Produce a reliable FHSE VM installer artifact for Apple Silicon and UTM first.
 
-## Expected outputs
+## Current output
 
-- `fhse-vm-vX.Y.Z-x86_64.qcow2`
-- `fhse-vm-vX.Y.Z-x86_64.ova`
+The first canonical VM artifact is:
 
-## Intended strategy
+- `images/VM/fhse-vm-v0.18.2-arm64-rc3.12.iso`
 
-The VM target should reuse the shared FHSE installation logic while packaging it for virtualization-first workflows.
+## Current strategy
 
-## First supported runtime candidates
+The VM target currently prioritizes a real ARM64 installer ISO that works with:
 
-- Proxmox / KVM with `qcow2`
-- desktop virtualization import with `ova`
+- UTM `Virtualize`
+- Apple Silicon Macs
 
-## Validation expectations
+This target reuses the shared FHSE runtime bundle and injects an unattended Ubuntu Server installation seed directly into the ARM64 ISO.
 
-- appliance boots without manual repair
-- onboarding wizard is reachable on the LAN
-- aaPanel installs correctly
-- FlatCMS is available at the end of the workflow
+At the end of the Ubuntu installation, the target boots as an FHSE VM and exposes:
 
-## Current helper
+- `http://fhse.local:8080`
+- `http://fhse.local:8080/server/`
 
-This target can already prepare the shared FHSE bundle archive through:
+## Build flow
 
-- `tools/prepare-fhse-core-bundle.sh`
+1. prepare the shared FHSE core bundle
+2. render `autoinstall/user-data` from the local `.env`
+3. extract the Ubuntu ARM64 ISO into a writable workspace
+4. inject:
+   - `autoinstall/user-data`
+   - `autoinstall/meta-data`
+   - `fhse/install-fhse-target.sh`
+   - `fhse/flatcms-home-server-bundle-v0.18.2-no-builders.zip`
+5. patch GRUB boot entries with:
+   - `autoinstall ds=nocloud;s=/cdrom/autoinstall/`
+6. rebuild a bootable ARM64 ISO
 
-It can also stage the first local VM workspace skeleton through:
+## Builder commands
 
-- `tools/stage-workspace.sh`
+- prepare the shared bundle:
+  - `tools/prepare-fhse-core-bundle.sh`
+- render the autoinstall seed:
+  - `tools/render-autoinstall-user-data.sh`
+- build the final ARM64 ISO:
+  - `tools/build-fhse-vm-arm64-iso.sh --base-iso /path/to/ubuntu-22.04.5-live-server-arm64.iso`
 
-And render a final cloud-init seed from a local `.env` file through:
+## Current scope
 
-- `tools/render-cloud-init-user-data.sh`
+This first VM implementation intentionally does not try to solve everything at once.
+
+Current priority:
+
+- UTM ARM64 installer ISO
+
+Later targets:
+
+- `qcow2`
+- `ova`
+- Proxmox-ready images

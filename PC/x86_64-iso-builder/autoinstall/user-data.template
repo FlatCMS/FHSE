@@ -1,6 +1,12 @@
 #cloud-config
 autoinstall:
   version: 1
+  locale: fr_FR.UTF-8
+  keyboard:
+    layout: fr
+  storage:
+    layout:
+      name: direct
   identity:
     hostname: __FHSE_HOSTNAME__
     username: __FHSE_USERNAME__
@@ -9,10 +15,16 @@ autoinstall:
     install-server: true
     allow-pw: false
   packages:
+    - avahi-daemon
     - curl
+    - openssh-server
+    - python3
     - unzip
     - rsync
     - xz-utils
   late-commands:
-    - echo "FHSE PC autoinstall skeleton ready"
-
+    - curtin in-target --target=/target -- mkdir -p /var/lib/flatcms-home-server/install /usr/local/sbin
+    - cp /cdrom/fhse/flatcms-home-server-bundle-v0.18.2-no-builders.zip /target/var/lib/flatcms-home-server/install/
+    - cp /cdrom/fhse/install-fhse-target.sh /target/usr/local/sbin/install-fhse-target.sh
+    - chmod 0755 /target/usr/local/sbin/install-fhse-target.sh
+    - curtin in-target --target=/target -- /usr/local/sbin/install-fhse-target.sh "__FHSE_HOSTNAME__"

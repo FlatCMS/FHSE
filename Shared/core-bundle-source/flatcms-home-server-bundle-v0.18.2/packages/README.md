@@ -6,7 +6,7 @@ The shared FHSE core source does not duplicate the FlatCMS payload archive.
 
 - file: `packages/flatcms.zip`
 - current validated SHA-256:
-  - `78617f2df4f5a9599b0651eee0af1854113ec89acd1dd33df5bae93388717690`
+  - `b0cf4d9cf1e9e6805ce0293989248a6d16be9c7fc2f309872beca103b4cb8ba0`
 
 ## Rationale
 
@@ -19,4 +19,3 @@ Keeping the payload out of the shared source avoids unnecessary repository growt
 ## Target rule
 
 Each target builder is responsible for embedding the payload at packaging time or refresh time.
-

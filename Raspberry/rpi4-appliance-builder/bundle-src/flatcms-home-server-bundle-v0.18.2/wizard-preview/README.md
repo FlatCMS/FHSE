@@ -58,6 +58,6 @@ aaPanel credentials:
 
 The installer remains intentionally local-only for this preview:
 
-- Cloudflare Tunnel setup is available when a tunnel token is provided;
+- public publishing will later be handled from FlatCMS admin;
 - no Let's Encrypt automation yet;
 - no permanent first-boot service yet.

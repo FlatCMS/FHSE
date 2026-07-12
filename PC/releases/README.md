@@ -1,6 +1,6 @@
 # PC Releases
 
-Future PC release metadata will be stored here.
+Validated x86_64 ISO release metadata will be stored here.
 
 Expected contents per version:
 
@@ -8,4 +8,4 @@ Expected contents per version:
 - release notes
 - checksum
 - validation notes
-
+- tested base Ubuntu ISO reference

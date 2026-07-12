@@ -27,7 +27,6 @@ The first testable version should not try to build the final commercial USB key 
 - aaPanel installation;
 - Nginx/PHP stack readiness;
 - FlatCMS deployment path;
-- Cloudflare Tunnel mode;
 - final links to aaPanel and FlatCMS;
 - healthchecks after every step.
 
@@ -40,12 +39,10 @@ The first testable version should not try to build the final commercial USB key 
 5. Install OS or validate existing OS.
 6. Install server stack.
 7. Install FlatCMS.
-8. Configure public access.
-9. Run final healthcheck.
-10. Show success screen with:
+8. Run final healthcheck.
+9. Show success screen with:
     - aaPanel URL;
     - FlatCMS local URL;
-    - FlatCMS public URL when configured;
     - diagnostic report.
 
 ## Current Files
@@ -77,7 +74,7 @@ wizard-ui/
 - Raspberry Pi should use the Raspberry Pi compatible Ubuntu preinstalled server image, not a generic PC ISO.
 - Mini PC and older Celeron PC can use a bootable amd64 ISO path.
 - Synology DS120 should not be treated as a normal boot USB target. It needs a DSM package or Web Station integration workflow.
-- Cloudflare Tunnel is the recommended public access mode to avoid customer-side NAT/router configuration.
+- Public publishing should later be handled from FlatCMS admin, not from the FHSE installer.
 
 ## V0.9 Field Notes
 

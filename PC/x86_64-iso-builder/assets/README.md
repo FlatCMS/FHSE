@@ -1,10 +1,10 @@
 # PC Builder Assets
 
-Generated target-local assets can be staged here during the ISO build workflow.
+This folder contains the small assets used by the x86_64 ISO builder:
 
-This folder is intentionally kept light in Git.
+- generated FHSE bundle archive:
+  - `flatcms-home-server-bundle-v0.18.2-no-builders.zip`
+- target-side helper copied into the ISO:
+  - `install-fhse-target.sh`
 
-Expected generated file later:
-
-- `flatcms-home-server-bundle-v0.18.2-no-builders.zip`
-
+The generated bundle archive stays lightweight enough for local staging, but the final bootable ISO itself is not committed to Git.
