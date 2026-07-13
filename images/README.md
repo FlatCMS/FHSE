@@ -11,7 +11,4 @@ Examples:
 Repository policy:
 
 - generated binaries are intentionally excluded from Git
-- tracked release metadata stays in:
-  - `Raspberry/releases/`
-  - `VM/releases/`
-  - `PC/releases/`
+- only validated local artifacts should remain in this folder

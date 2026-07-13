@@ -8,7 +8,6 @@ Every target should progressively converge toward:
 
 - `README.md`
 - `builder/` or target-specific builder root
-- `releases/`
 - `docs/`
 
 ## Required README sections
@@ -19,15 +18,6 @@ Every target should progressively converge toward:
 - build prerequisites
 - validation flow
 - current status
-
-## Required release metadata
-
-Each released version should provide, at minimum:
-
-- changelog
-- release and test notes
-- checksum file
-- build log when available
 
 ## Required build guarantees
 
@@ -44,4 +34,3 @@ Targets must not ship with:
 - a publicly documented default technical password
 - SSH password authentication enabled by default unless explicitly justified
 - hidden mandatory exposure to the Internet
-

@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 import argparse
-import http.client
 import json
 import os
 import re
 import shlex
 import signal
-import ssl
 import subprocess
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse, urlsplit, urlunsplit
+from urllib.parse import urlparse, urlsplit
 
 from fhse_cloudflare import (
     FhseApiError,
@@ -48,26 +46,6 @@ AAPANEL_SSL_FLAG = Path("/www/server/panel/data/ssl.pl")
 
 TECHNICAL_ACCESS_USER = "admin"
 MIN_TECHNICAL_PASSWORD_LENGTH = 8
-FHSE_PUBLIC_ORIGIN = "http://fhse.local:8080"
-AAPANEL_PROXY_PREFIX = "/server"
-PROXY_HOP_BY_HOP_HEADERS = {
-    "connection",
-    "keep-alive",
-    "proxy-authenticate",
-    "proxy-authorization",
-    "te",
-    "trailers",
-    "transfer-encoding",
-    "upgrade",
-}
-PROXY_TEXT_TYPES = (
-    "text/",
-    "application/json",
-    "application/javascript",
-    "application/x-javascript",
-    "application/xml",
-    "image/svg+xml",
-)
 
 PRODUCT_STEPS = [
     {
@@ -244,21 +222,6 @@ def enforce_local_aapanel_url_scheme(url, report=None):
     return normalized
 
 
-def rebuild_local_url(url, scheme=None):
-    local_ip = first_local_ip()
-    if not url:
-        return ""
-    match = re.match(r"^(https?://)(\[[^]]+\]|[^/:]+)(:\d+)?(/.*)?$", url)
-    if not match:
-        return url
-    target_scheme = scheme or match.group(1).rstrip("://")
-    return f"{target_scheme}://{local_ip}{match.group(3) or ''}{match.group(4) or ''}"
-
-
-def aapanel_proxy_url():
-    return f"{FHSE_PUBLIC_ORIGIN}{AAPANEL_PROXY_PREFIX}/"
-
-
 def aapanel_backend_context(credentials=None, report=None):
     credentials = credentials or refresh_credentials()
     report = report or read_env_file(REPORT_PATH)
@@ -271,171 +234,11 @@ def aapanel_backend_context(credentials=None, report=None):
     if not parsed.scheme or not parsed.netloc:
         return {}
 
-    base_path = parsed.path.rstrip("/")
     return {
         "backend_url": backend_url,
         "scheme": parsed.scheme,
         "netloc": parsed.netloc,
-        "host": parsed.hostname or "127.0.0.1",
-        "port": parsed.port or (80 if parsed.scheme == "http" else 443),
-        "origin": f"{parsed.scheme}://{parsed.netloc}",
-        "base_path": base_path,
-        "public_url": aapanel_proxy_url(),
-        "public_prefix": AAPANEL_PROXY_PREFIX,
     }
-
-
-def build_aapanel_target_path(request_path, context):
-    parsed = urlsplit(request_path)
-    public_prefix = context["public_prefix"]
-    request_only_path = parsed.path or "/"
-
-    if request_only_path == public_prefix or request_only_path.startswith(f"{public_prefix}/"):
-        suffix = request_only_path[len(public_prefix):]
-    else:
-        suffix = request_only_path
-
-    if suffix == "":
-        suffix = "/"
-    elif not suffix.startswith("/"):
-        suffix = f"/{suffix}"
-
-    backend_base = context["base_path"]
-    backend_path = f"{backend_base}{suffix}" if backend_base else suffix
-    if not backend_path:
-        backend_path = "/"
-    query = f"?{parsed.query}" if parsed.query else ""
-    return f"{backend_path}{query}"
-
-
-def rewrite_aapanel_location(location, context):
-    if not location:
-        return location
-
-    public_prefix = context["public_prefix"]
-    backend_origin = context["origin"]
-    backend_base = context["base_path"]
-    origin_variants = [
-        backend_origin,
-        f"http://{context['netloc']}",
-        f"https://{context['netloc']}",
-    ]
-
-    for origin in origin_variants:
-        if location.startswith(f"{origin}{backend_base}/"):
-            return f"{public_prefix}{location[len(origin + backend_base):]}"
-        if backend_base and location == f"{origin}{backend_base}":
-            return f"{public_prefix}/"
-    if backend_base and location.startswith(f"{backend_base}/"):
-        return f"{public_prefix}{location[len(backend_base):]}"
-    if backend_base and location == backend_base:
-        return f"{public_prefix}/"
-    if location.startswith("/"):
-        return f"{public_prefix}{location}"
-    return location
-
-
-def rewrite_aapanel_cookie(cookie_value, context):
-    if not cookie_value:
-        return cookie_value
-
-    public_path = f"{context['public_prefix']}/"
-    rewritten = re.sub(r"(?i)\bPath=[^;]*", f"Path={public_path}", cookie_value)
-    if "path=" not in cookie_value.lower():
-        rewritten = f"{rewritten}; Path={public_path}"
-    rewritten = re.sub(r"(?i);\s*Domain=[^;]*", "", rewritten)
-    if context["scheme"] != "https":
-        rewritten = re.sub(r"(?i);\s*Secure", "", rewritten)
-    return rewritten
-
-
-def should_rewrite_proxy_body(content_type):
-    lowered = (content_type or "").lower()
-    return any(lowered.startswith(prefix) for prefix in PROXY_TEXT_TYPES)
-
-
-def rewrite_aapanel_body(text, context):
-    backend_origin = context["origin"]
-    backend_base = context["base_path"]
-    public_prefix = context["public_prefix"]
-    origin_variants = [
-        backend_origin,
-        f"http://{context['netloc']}",
-        f"https://{context['netloc']}",
-    ]
-
-    replacements = []
-    if backend_base:
-        for origin in origin_variants:
-            replacements.extend([
-                (f"{origin}{backend_base}/", f"{public_prefix}/"),
-                (f"{origin}{backend_base}", public_prefix),
-            ])
-        replacements.extend([
-            (f'"{backend_base}/', f'"{public_prefix}/'),
-            (f"'{backend_base}/", f"'{public_prefix}/"),
-            (f"({backend_base}/", f"({public_prefix}/"),
-            (f"{backend_base}/", f"{public_prefix}/"),
-        ])
-
-    for origin in origin_variants:
-        replacements.extend([
-            (f"{origin}/", f"{public_prefix}/"),
-            (origin, public_prefix),
-        ])
-
-    for source, target in replacements:
-        text = text.replace(source, target)
-
-    # Rewrite root-relative aaPanel asset and route references to the public proxy prefix.
-    root_relative_patterns = [
-        (
-            re.compile(r'((?:href|src|action|poster)=["\'])/(?!/|server/)'),
-            rf"\1{public_prefix}/",
-        ),
-        (
-            re.compile(r'(url\((?:["\']?))\/(?!/|server/)'),
-            rf"\1{public_prefix}/",
-        ),
-        (
-            re.compile(r'((?:fetch|axios\.(?:get|post|put|patch|delete)|open)\(\s*["\'])/(?!/|server/)'),
-            rf"\1{public_prefix}/",
-        ),
-        (
-            re.compile(r'((?:location(?:\.href)?|window\.location(?:\.href)?)\s*=\s*["\'])/(?!/|server/)'),
-            rf"\1{public_prefix}/",
-        ),
-        (
-            re.compile(r'((?:window\.open|location\.replace)\(\s*["\'])/(?!/|server/)'),
-            rf"\1{public_prefix}/",
-        ),
-    ]
-
-    for pattern, replacement in root_relative_patterns:
-        text = pattern.sub(replacement, text)
-
-    return text
-
-
-def should_proxy_aapanel_request(request_path, headers):
-    path = urlparse(request_path).path
-    if path == "/" or path.startswith("/api/"):
-        return False
-
-    if path == AAPANEL_PROXY_PREFIX or path.startswith(f"{AAPANEL_PROXY_PREFIX}/"):
-        return True
-
-    referer = headers.get("Referer", "") or headers.get("referer", "")
-    if referer:
-        referer_path = urlparse(referer).path
-        if referer_path == AAPANEL_PROXY_PREFIX or referer_path.startswith(f"{AAPANEL_PROXY_PREFIX}/"):
-            return True
-
-    # aaPanel triggers root-relative requests that do not always preserve a Referer
-    # path, especially after login or when toggling locale. The wizard owns only `/`
-    # and `/api/*`, so every other route should fall through to the aaPanel proxy when
-    # the backend is available.
-    return bool(aapanel_backend_context())
 
 
 def parse_aapanel_info(text):
@@ -1104,97 +907,8 @@ class Handler(BaseHTTPRequestHandler):
         }, 403)
         return False
 
-    def proxy_aapanel(self):
-        context = aapanel_backend_context()
-        if not context:
-            self.send_json({"error": "aaPanel backend unavailable"}, 503)
-            return
-
-        if self.path == AAPANEL_PROXY_PREFIX:
-            self.send_response(302)
-            self.send_header("Location", f"{AAPANEL_PROXY_PREFIX}/")
-            self.end_headers()
-            return
-
-        request_body = b""
-        content_length = int(self.headers.get("Content-Length", "0") or "0")
-        if content_length > 0:
-            request_body = self.rfile.read(content_length)
-
-        forwarded_headers = {}
-        for key, value in self.headers.items():
-            lowered = key.lower()
-            if lowered in PROXY_HOP_BY_HOP_HEADERS or lowered in ("host", "content-length", "accept-encoding"):
-                continue
-            forwarded_headers[key] = value
-
-        forwarded_headers["Host"] = context["netloc"]
-        forwarded_headers["Accept-Encoding"] = "identity"
-        forwarded_headers["X-Forwarded-Host"] = self.headers.get("Host", "fhse.local:8080")
-        forwarded_headers["X-Forwarded-Proto"] = "http"
-        forwarded_headers["X-Forwarded-For"] = self.client_address[0]
-
-        if context["scheme"] == "https":
-            ssl_context = ssl._create_unverified_context()
-            connection = http.client.HTTPSConnection(
-                context["host"],
-                context["port"],
-                timeout=30,
-                context=ssl_context,
-            )
-        else:
-            connection = http.client.HTTPConnection(context["host"], context["port"], timeout=30)
-        response = None
-        rewritten_body = False
-
-        try:
-            connection.request(
-                self.command,
-                build_aapanel_target_path(self.path, context),
-                body=request_body or None,
-                headers=forwarded_headers,
-            )
-            response = connection.getresponse()
-            payload = b"" if self.command == "HEAD" else response.read()
-            content_type = response.getheader("Content-Type", "")
-
-            if payload and should_rewrite_proxy_body(content_type):
-                charset_match = re.search(r"charset=([A-Za-z0-9._-]+)", content_type, re.IGNORECASE)
-                charset = charset_match.group(1) if charset_match else "utf-8"
-                text = payload.decode(charset, errors="replace")
-                text = rewrite_aapanel_body(text, context)
-                payload = text.encode(charset)
-                rewritten_body = True
-
-            self.send_response(response.status)
-            for key, value in response.getheaders():
-                lowered = key.lower()
-                if lowered in PROXY_HOP_BY_HOP_HEADERS or lowered == "content-length":
-                    continue
-                if rewritten_body and lowered == "content-encoding":
-                    continue
-                if lowered == "location":
-                    value = rewrite_aapanel_location(value, context)
-                elif lowered == "set-cookie":
-                    value = rewrite_aapanel_cookie(value, context)
-                self.send_header(key, value)
-
-            self.send_header("Content-Length", str(len(payload)))
-            self.end_headers()
-            if self.command != "HEAD":
-                self.wfile.write(payload)
-        except Exception as exc:
-            self.send_json({"error": f"aaPanel proxy failure: {exc}"}, 502)
-        finally:
-            if response is not None:
-                response.close()
-            connection.close()
-
     def do_HEAD(self):
         path = urlparse(self.path).path
-        if should_proxy_aapanel_request(self.path, self.headers):
-            self.proxy_aapanel()
-            return
         if path.startswith("/api/"):
             known_paths = (
                 "/api/status",
@@ -1223,9 +937,6 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
-        if should_proxy_aapanel_request(self.path, self.headers):
-            self.proxy_aapanel()
-            return
         if path == "/api/status":
             self.send_json(product_payload())
             return
@@ -1259,9 +970,6 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
-        if should_proxy_aapanel_request(self.path, self.headers):
-            self.proxy_aapanel()
-            return
         try:
             payload = self.read_json_body()
             if path == "/api/configure":
@@ -1309,24 +1017,12 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"ok": False, "error": str(exc), "status": product_payload()}, 500)
 
     def do_PUT(self):
-        path = urlparse(self.path).path
-        if should_proxy_aapanel_request(self.path, self.headers):
-            self.proxy_aapanel()
-            return
         self.send_json({"error": "Not found"}, 404)
 
     def do_PATCH(self):
-        path = urlparse(self.path).path
-        if should_proxy_aapanel_request(self.path, self.headers):
-            self.proxy_aapanel()
-            return
         self.send_json({"error": "Not found"}, 404)
 
     def do_DELETE(self):
-        path = urlparse(self.path).path
-        if should_proxy_aapanel_request(self.path, self.headers):
-            self.proxy_aapanel()
-            return
         self.send_json({"error": "Not found"}, 404)
 
 

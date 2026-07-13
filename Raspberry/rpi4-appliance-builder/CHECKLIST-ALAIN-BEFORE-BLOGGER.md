@@ -13,7 +13,7 @@ Cette rc3.12 est validée uniquement si, après flash avec Raspberry Pi Imager e
 - L'étape site aaPanel passe.
 - L'étape FlatCMS passe.
 - `http://IP_DU_RASPBERRY/` ouvre FlatCMS.
-- Le bouton `Administration serveur avancée` ouvre `http://fhse.local:8080/server/` sans alerte bloquante de certificat.
+- Le bouton `Administration serveur avancée` ouvre bien l’URL aaPanel directe générée en fin d’installation.
 - Le rapport final contient `CHECK_FLATCMS_ROUTE=ok`.
 
 Si un seul point échoue, ne pas transmettre l'image au blogger.

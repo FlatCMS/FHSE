@@ -2,6 +2,12 @@
 
 This folder will host the FHSE target for x86_64 physical machines.
 
+## Validation status
+
+Experimental and not yet validated.
+
+No PC installer image is currently considered field-tested or release-ready.
+
 ## Target scope
 
 - mini PCs
@@ -28,5 +34,5 @@ The first PC target should be based on:
 
 ## Status
 
-Planned. No PC builder is committed yet.
-
+A first PC builder exists in this repository, but the generated PC artifacts are
+still untested and must be treated as experimental.

@@ -2,7 +2,7 @@
 
 FHSE is the **FlatCMS Home Server Edition** project.
 
-This repository is intended to host the platform-specific builders, deployment assets, and release notes used to deliver FlatCMS as a turnkey self-hosted appliance without requiring command-line operations from the final user.
+This repository hosts the platform-specific builders, deployment assets, and shared contracts used to deliver FlatCMS as a turnkey self-hosted appliance without requiring command-line operations from the final user.
 
 ## Current layout
 
@@ -11,41 +11,35 @@ This repository is intended to host the platform-specific builders, deployment a
   - centralizes future `.img`, `.img.xz`, `.iso`, `.qcow2`, `.ova`
   - intentionally excluded from Git
 - `Raspberry/`
-  - first tracked target
-  - Raspberry Pi 4 / 400 appliance builder
-  - release notes and checksums for the latest validated Raspberry image
+  - active Raspberry Pi 4 / 400 appliance builder
+  - Linux-only build pipeline for the bootable Raspberry image
 - `PC/`
-  - future x86_64 installer target
+  - experimental x86_64 installer target
   - ISO-oriented deployment flow for mini PCs, NUCs, and legacy PCs
 - `VM/`
-  - future virtual appliance target
-  - VM-oriented outputs such as qcow2, ova, and preconfigured appliances
+  - active virtual appliance target
+  - ARM64 installer ISO for UTM plus future VM artifacts
 - `docs/`
   - shared architecture and target contracts
 
 ## Repository policy
 
-- keep source, scripts, docs, and small traceability artifacts in Git
+- keep source, scripts, and useful docs in Git
 - do not commit generated disk images such as `.img`, `.img.xz`, `.iso`, `.qcow2`, or `.ova`
 - keep generated binaries in `images/` locally or publish them later as GitHub release assets
 
 ## Current tracked target
 
-The first committed target is:
+The current validated target families are:
 
 - Raspberry Pi 4 / 400
-- Ubuntu Server based appliance
-- aaPanel
-- Nginx
-- PHP 8.5
-- FlatCMS bundled in the default website root
+- ARM64 VM ISO for UTM
 
 ## Next target families
 
-Planned target families:
+Planned next target families:
 
 - `PC/`
-- `VM/`
 - `NAS/`
 
 ## Product direction

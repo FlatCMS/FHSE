@@ -39,7 +39,3 @@ The active VM builder currently lives in:
 The x86_64 installer-oriented builder remains available separately in:
 
 - `PC/x86_64-iso-builder/`
-
-Tracked VM release metadata stays in:
-
-- `VM/releases/`

@@ -6,12 +6,8 @@ This folder contains the Raspberry Pi target for FHSE.
 
 - `rpi4-appliance-builder/`
   - working builder source and boot overlay used to generate the Raspberry Pi appliance image
-- `releases/`
-  - lightweight release metadata kept in Git
-  - changelog
-  - test notes
-  - checksum
-  - build log
+- `images/Raspberry/`
+  - local destination for validated Raspberry `.img` and `.img.xz` outputs
 
 ## Intentionally excluded from Git
 
@@ -27,4 +23,4 @@ Those files should be stored locally or published later as release assets.
 - Raspberry Pi 4
 - Raspberry Pi 400
 - Ubuntu Server ARM64 base image
-
+- Linux build pipeline only

@@ -40,7 +40,7 @@ Each target should expose:
 - one primary release artifact
 - one repeatable build flow
 - one validation checklist
-- one release metadata folder
+- one concise source layout
 
 ## Primary artifact by target
 
@@ -82,9 +82,7 @@ Keep in Git:
 - source
 - scripts
 - documentation
-- checksums
-- logs
-- release notes
+- small validation references when still useful
 
 Do not keep in Git:
 
