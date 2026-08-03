@@ -49,3 +49,11 @@ Until all target builders consume the shared source automatically, the Raspberry
 - synchronized from the neutral shared source
 
 This avoids breaking the validated target while making future PC and VM work converge on one source.
+
+## Reproducibility rule
+
+The shared core bundle must be byte-for-byte reproducible for identical payload bytes, independently of source file timestamps.
+
+- default normalized epoch: `946684800` (`2000-01-01T00:00:00Z`)
+- override: `SOURCE_DATE_EPOCH`
+- validation: `Shared/tools/validate-core-bundle-reproducibility.sh`
