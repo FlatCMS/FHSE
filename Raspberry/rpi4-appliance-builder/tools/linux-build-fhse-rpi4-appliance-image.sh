@@ -52,6 +52,23 @@ sync
 LOOP_DEV="$(losetup --find --partscan --show "$IMAGE_PATH")"
 echo "Loop device: $LOOP_DEV"
 
+# Recent Ubuntu kernels can register the loop device before exposing its
+# partition nodes. Refresh the partition table and wait for udev before mount.
+partprobe "$LOOP_DEV" || true
+partx -u "$LOOP_DEV" || true
+udevadm settle || true
+for _ in {1..20}; do
+  if [ -b "${LOOP_DEV}p1" ] && [ -b "${LOOP_DEV}p2" ]; then
+    break
+  fi
+  sleep 0.25
+done
+if [ ! -b "${LOOP_DEV}p1" ] || [ ! -b "${LOOP_DEV}p2" ]; then
+  echo "ERROR: image partitions were not exposed for $LOOP_DEV." >&2
+  lsblk "$LOOP_DEV" >&2 || true
+  exit 1
+fi
+
 MNT_BOOT="$(mktemp -d)"
 MNT_ROOT="$(mktemp -d)"
 mount "${LOOP_DEV}p1" "$MNT_BOOT"
