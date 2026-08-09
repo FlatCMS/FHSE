@@ -228,7 +228,10 @@ run_xorriso_tolerant xorriso \
   -commit \
   -end >/dev/null 2>&1
 
-shasum -a 256 "$OUTPUT_ISO_PATH" > "$OUTPUT_SHA256_PATH"
+(
+  cd "$(dirname "$OUTPUT_ISO_PATH")"
+  shasum -a 256 "$(basename "$OUTPUT_ISO_PATH")" > "$(basename "$OUTPUT_SHA256_PATH")"
+)
 
 echo "FHSE VM ARM64 ISO built:"
 echo "  $OUTPUT_ISO_PATH"
