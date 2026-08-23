@@ -294,7 +294,7 @@ def write_tunnel_env(token, public_hostname):
 def sync_capabilities_file():
     report = read_env_file(REPORT_PATH)
     flatcms = build_flatcms_state(report)
-    version = str(report.get("FHSE_VERSION") or "0.18.2-rpi4.1-rc3.12").strip()
+    version = str(report.get("FHSE_VERSION") or "0.18.2-rpi4.1-rc3.13").strip()
     profile = str(report.get("FHSE_PROFILE") or report.get("FLATCMS_PROFILE") or "mini-pc").strip()
     capabilities_path = Path(report.get("FHSE_CAPABILITIES_PATH") or DEFAULT_CAPABILITIES_PATH)
     tunnel_env = read_tunnel_env()
@@ -348,7 +348,7 @@ def build_api_capabilities_payload(report=None, flatcms=None, configured=None, a
     configured = configured if configured is not None else normalize_tunnel_token(tunnel_env.get(FHSE_CLOUDFLARE_ENV_TOKEN_KEY, "")) != ""
     active = active if active is not None else service_is_active(FHSE_CLOUDFLARE_SERVICE_NAME)
     public_hostname = public_hostname if public_hostname is not None else normalize_public_hostname(tunnel_env.get(FHSE_CLOUDFLARE_ENV_HOSTNAME_KEY, ""))
-    version = version or str(report.get("FHSE_VERSION") or "0.18.2-rpi4.1-rc3.12").strip()
+    version = version or str(report.get("FHSE_VERSION") or "0.18.2-rpi4.1-rc3.13").strip()
     profile = profile or str(report.get("FHSE_PROFILE") or report.get("FLATCMS_PROFILE") or "mini-pc").strip()
     capabilities_path = Path(capabilities_path or report.get("FHSE_CAPABILITIES_PATH") or DEFAULT_CAPABILITIES_PATH)
     capabilities_exists = capabilities_path.is_file()

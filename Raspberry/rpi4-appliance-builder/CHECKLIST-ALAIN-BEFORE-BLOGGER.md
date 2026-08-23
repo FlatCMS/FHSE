@@ -1,6 +1,6 @@
-# Checklist Alain — FHSE Raspberry Pi rc3.12
+# Checklist Alain — FHSE Raspberry Pi rc3.13
 
-Cette rc3.12 est validée uniquement si, après flash avec Raspberry Pi Imager et sans aucune commande terminal :
+Cette rc3.13 est validée uniquement si, après flash avec Raspberry Pi Imager et sans aucune commande terminal :
 
 - `http://fhse.local:8080` ouvre le wizard FHSE.
 - `http://IP_DU_RASPBERRY:8080` ouvre aussi le wizard.

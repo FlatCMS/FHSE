@@ -143,7 +143,7 @@ LOCAL_IP="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if (
 mkdir -p /etc/issue.d
 cat > /etc/issue.d/fhse.issue <<ISSUE
 
-FlatCMS Home Server Edition v0.18.2-rpi4.1 RC3.12 — Raspberry Pi / no legacy builders
+FlatCMS Home Server Edition v0.18.2-rpi4.1 RC3.13 — Raspberry Pi / no legacy builders
 Wizard local: http://fhse.local:$PORT
 Wizard IP: http://${LOCAL_IP:-IP_DU_RASPBERRY}:$PORT
 Emergency SSH: configure in wizard

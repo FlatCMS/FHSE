@@ -19,6 +19,8 @@ if [ ! -f "$FLATCMS_ZIP" ]; then
   exit 1
 fi
 
+"$ROOT_DIR/../../Shared/tools/validate-flatcms-payload.sh" "$FLATCMS_ZIP"
+
 if zipinfo -1 "$FLATCMS_ZIP" | grep -E 'app/Modules/(PagesBuilder|MenuBuilder|FooterBuilder)(/|$)|builders-launch|pages-builder\.json|footer-builder\.json' >/dev/null; then
   echo "ERROR: legacy builders still found in FlatCMS package."
   zipinfo -1 "$FLATCMS_ZIP" | grep -E 'app/Modules/(PagesBuilder|MenuBuilder|FooterBuilder)(/|$)|builders-launch|pages-builder\.json|footer-builder\.json'

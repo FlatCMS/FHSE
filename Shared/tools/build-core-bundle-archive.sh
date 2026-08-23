@@ -20,6 +20,8 @@ if [ ! -f "$PAYLOAD_PATH" ]; then
   exit 1
 fi
 
+"$ROOT_DIR/Shared/tools/validate-flatcms-payload.sh" "$PAYLOAD_PATH"
+
 for command_name in zip rsync python3; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     echo "The '$command_name' command is required." >&2

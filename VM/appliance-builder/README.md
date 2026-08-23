@@ -8,7 +8,7 @@ Produce a reliable FHSE VM installer artifact for Apple Silicon and UTM first.
 
 The first canonical VM artifact is:
 
-- `images/VM/fhse-vm-v0.18.2-arm64-rc3.12.iso`
+- `images/VM/fhse-vm-v0.18.2-arm64-rc3.13.iso`
 
 ## Current strategy
 

@@ -861,7 +861,7 @@ def start_step(step_id, payload):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "FlatCMSInstaller/0.18.2-rc3.12"
+    server_version = "FlatCMSInstaller/0.18.2-rc3.13"
 
     def log_message(self, fmt, *args):
         return
