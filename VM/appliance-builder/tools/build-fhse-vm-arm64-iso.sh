@@ -13,8 +13,9 @@ CONFIG_PATH="$BUILDER_DIR/examples/fhse-vm-arm64.env.example"
 BASE_ISO_URL="https://cdimages.ubuntu.com/ubuntu/releases/22.04/release/ubuntu-22.04.5-live-server-arm64.iso"
 BASE_ISO_PATH="$DIST_DIR/ubuntu-22.04.5-live-server-arm64.iso"
 VERSION="$(tr -d '\n' < "$BUILDER_DIR/VERSION.txt")"
-OUTPUT_ISO_PATH="$RELEASE_DIR/fhse-vm-${VERSION}.iso"
-OUTPUT_SHA256_PATH="${OUTPUT_ISO_PATH}.sha256"
+PAYLOAD_PATH="$ROOT_DIR/Raspberry/rpi4-appliance-builder/bundle-src/flatcms-home-server-bundle-v0.18.2/packages/flatcms.zip"
+OUTPUT_ISO_PATH=""
+OUTPUT_SHA256_PATH=""
 BUNDLE_PREPARE_SCRIPT="$BUILDER_DIR/tools/prepare-fhse-core-bundle.sh"
 RENDER_SCRIPT="$BUILDER_DIR/tools/render-autoinstall-user-data.sh"
 INSTALL_SCRIPT_SOURCE="$BUILDER_DIR/assets/install-fhse-target.sh"
@@ -87,7 +88,6 @@ while [ $# -gt 0 ]; do
       ;;
     --output)
       OUTPUT_ISO_PATH="$2"
-      OUTPUT_SHA256_PATH="${OUTPUT_ISO_PATH}.sha256"
       shift 2
       ;;
     --download)
@@ -157,6 +157,11 @@ if [ ! -f "$BASE_ISO_PATH" ]; then
 fi
 
 "$BUNDLE_PREPARE_SCRIPT"
+FLATCMS_VERSION="$("$ROOT_DIR/Shared/tools/read-flatcms-payload-version.sh" "$PAYLOAD_PATH")"
+if [ -z "$OUTPUT_ISO_PATH" ]; then
+  OUTPUT_ISO_PATH="$RELEASE_DIR/fhse-vm-${VERSION}-${FLATCMS_VERSION}.iso"
+fi
+OUTPUT_SHA256_PATH="${OUTPUT_ISO_PATH}.sha256"
 "$RENDER_SCRIPT" "$CONFIG_PATH" "$WORKSPACE_DIR/user-data"
 
 prepare_clean_dir "$ISO_ROOT_DIR"

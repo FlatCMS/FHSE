@@ -7,12 +7,14 @@ if [[ -z "$PAYLOAD" || ! -f "$PAYLOAD" ]]; then
   exit 2
 fi
 
-python3 - "$PAYLOAD" <<'PY'
+EXPECTED_CORE="${2:-}"
+
+python3 - "$PAYLOAD" "$EXPECTED_CORE" <<'PY'
 import json, sys, zipfile
 from pathlib import PurePosixPath
 
 payload = sys.argv[1]
-expected_core = "1.1.5"
+expected_core = sys.argv[2].strip()
 expected_modules = {
     "Modules": "1.0.3",
     "Backups": "1.0.2",
@@ -44,7 +46,7 @@ with zipfile.ZipFile(payload) as zf:
         core_version = ""
     else:
         core_version = zf.read("VERSION").decode("utf-8", "replace").strip()
-        if core_version != expected_core:
+        if expected_core and core_version != expected_core:
             errors.append(f"Core VERSION={core_version!r}, expected {expected_core!r}")
 
     try:
@@ -52,8 +54,11 @@ with zipfile.ZipFile(payload) as zf:
     except Exception as exc:
         flatcms = {}
         errors.append(f"flatcms.json invalid or missing: {exc}")
-    if str(flatcms.get("version", "")).strip() != expected_core:
-        errors.append(f"flatcms.json version={flatcms.get('version')!r}, expected {expected_core!r}")
+    manifest_version = str(flatcms.get("version", "")).strip()
+    if manifest_version != core_version:
+        errors.append(f"flatcms.json version={manifest_version!r}, VERSION={core_version!r}")
+    if expected_core and manifest_version != expected_core:
+        errors.append(f"flatcms.json version={manifest_version!r}, expected {expected_core!r}")
 
     for module, expected in expected_modules.items():
         path = f"app/Modules/{module}/module.json"
@@ -92,5 +97,5 @@ if errors:
     for error in errors:
         print(f" - {error}", file=sys.stderr)
     raise SystemExit(1)
-print(f"FlatCMS FHSE payload validation OK: Core {expected_core}, Modules 1.0.3, Backups 1.0.2, Languages 1.0.1, UpdateManager 0.4.7")
+print(f"FlatCMS FHSE payload validation OK: Core {core_version}, Modules 1.0.3, Backups 1.0.2, Languages 1.0.1, UpdateManager 0.4.7")
 PY

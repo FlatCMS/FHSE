@@ -35,6 +35,18 @@ The current validated target families are:
 - Raspberry Pi 4 / 400
 - ARM64 VM ISO for UTM
 
+## Release payload workflow
+
+Stage a validated, versioned FlatCMS archive before building either image:
+
+```bash
+Shared/tools/stage-flatcms-release-payload.sh /path/to/flatcms-1.1.6.zip 1.1.6
+```
+
+The public artifact name always includes both the FHSE release and the
+embedded FlatCMS version. The internal appliance payload remains named
+`flatcms.zip` because the unattended installer depends on that stable name.
+
 ## Next target families
 
 Planned next target families:

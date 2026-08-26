@@ -41,6 +41,17 @@ mkdir -p "$TMP_DIR"
 rsync -a --exclude '.DS_Store' "$CORE_DIR/" "$STAGE_DIR/"
 cp "$PAYLOAD_PATH" "$STAGE_DIR/packages/flatcms.zip"
 
+python3 - "$STAGE_DIR/packages/flatcms.zip" "$STAGE_DIR/packages/flatcms.zip.sha256" <<'PYCHECKSUM'
+import hashlib
+from pathlib import Path
+import sys
+
+payload = Path(sys.argv[1])
+checksum = Path(sys.argv[2])
+digest = hashlib.sha256(payload.read_bytes()).hexdigest()
+checksum.write_text(f"{digest}  {payload.name}\n", encoding="utf-8")
+PYCHECKSUM
+
 python3 - "$STAGE_DIR" "$SOURCE_DATE_EPOCH" <<'PYTIME'
 import os
 from pathlib import Path

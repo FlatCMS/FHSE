@@ -5,8 +5,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KIT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DIST_DIR="$KIT_DIR/dist"
 BOOT_OVERLAY="$KIT_DIR/system-boot"
-VERSION="v0.18.2-rpi4.1-rc3.13"
-IMAGE_NAME="fhse-rpi4-${VERSION}.img"
+VERSION="$(tr -d '\r\n' < "$KIT_DIR/VERSION.txt")"
+PAYLOAD_PATH="$KIT_DIR/bundle-src/flatcms-home-server-bundle-v0.18.2/packages/flatcms.zip"
+FLATCMS_VERSION="$("$KIT_DIR/../../Shared/tools/read-flatcms-payload-version.sh" "$PAYLOAD_PATH")"
+IMAGE_NAME="fhse-rpi4-${VERSION}-${FLATCMS_VERSION}.img"
 IMAGE_PATH="$DIST_DIR/$IMAGE_NAME"
 IMAGE_XZ_PATH="$IMAGE_PATH.xz"
 BASE_URL="https://cdimage.ubuntu.com/releases/22.04/release/ubuntu-22.04.5-preinstalled-server-arm64+raspi.img.xz"
@@ -42,7 +44,7 @@ if [ "${1:-}" = "--download" ] || [ ! -f "$BASE_XZ" ]; then
   curl -L --fail --progress-bar "$BASE_URL" -o "$BASE_XZ"
 fi
 
-bash "$SCRIPT_DIR/validate-no-builders.sh"
+bash "$SCRIPT_DIR/validate-no-builders.sh" "$FLATCMS_VERSION"
 
 rm -f "$IMAGE_PATH" "$IMAGE_XZ_PATH"
 echo "Decompressing base image to: $IMAGE_PATH"
