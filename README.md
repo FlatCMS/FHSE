@@ -40,7 +40,7 @@ The current validated target families are:
 Stage a validated, versioned FlatCMS archive before building either image:
 
 ```bash
-Shared/tools/stage-flatcms-release-payload.sh /path/to/flatcms-1.1.6.zip 1.1.6
+Shared/tools/stage-flatcms-release-payload.sh /path/to/flatcms-1.1.7.zip 1.1.7
 ```
 
 The public artifact name always includes both the FHSE release and the

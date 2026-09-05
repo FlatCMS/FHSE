@@ -30,7 +30,7 @@ Current active target:
 
 Current local artifact target:
 
-- `images/VM/fhse-vm-v0.18.2-arm64-rc3.13-1.1.6.iso`
+- `images/VM/fhse-vm-v0.18.2-arm64-rc3.13-1.1.7.iso`
 
 The active VM builder currently lives in:
 

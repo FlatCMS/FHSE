@@ -25,8 +25,8 @@ sudo ./tools/linux-build-fhse-rpi4-appliance-image.sh --download
 Image générée :
 
 ```text
-dist/fhse-rpi4-v0.18.2-rpi4.1-rc3.13-1.1.6.img
-dist/fhse-rpi4-v0.18.2-rpi4.1-rc3.13-1.1.6.img.xz
+dist/fhse-rpi4-v0.18.2-rpi4.1-rc3.13-1.1.7.img
+dist/fhse-rpi4-v0.18.2-rpi4.1-rc3.13-1.1.7.img.xz
 ```
 
 ## Validation
