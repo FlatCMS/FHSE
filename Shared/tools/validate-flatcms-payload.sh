@@ -16,10 +16,10 @@ from pathlib import PurePosixPath
 payload = sys.argv[1]
 expected_core = sys.argv[2].strip()
 expected_modules = {
-    "Modules": "1.0.3",
+    "Modules": "1.0.4",
     "Backups": "1.0.2",
     "Languages": "1.0.1",
-    "UpdateManager": "0.4.7",
+    "UpdateManager": "0.4.8",
 }
 forbidden_prefixes = (
     "app/Modules/Store/",
@@ -97,5 +97,5 @@ if errors:
     for error in errors:
         print(f" - {error}", file=sys.stderr)
     raise SystemExit(1)
-print(f"FlatCMS FHSE payload validation OK: Core {core_version}, Modules 1.0.3, Backups 1.0.2, Languages 1.0.1, UpdateManager 0.4.7")
+print(f"FlatCMS FHSE payload validation OK: Core {core_version}, Modules 1.0.4, Backups 1.0.2, Languages 1.0.1, UpdateManager 0.4.8")
 PY
