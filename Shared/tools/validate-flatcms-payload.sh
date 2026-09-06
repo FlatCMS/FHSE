@@ -19,7 +19,7 @@ expected_modules = {
     "Modules": "1.0.4",
     "Backups": "1.0.2",
     "Languages": "1.0.1",
-    "UpdateManager": "0.4.8",
+    "UpdateManager": "0.4.9",
 }
 forbidden_prefixes = (
     "app/Modules/Store/",
@@ -97,5 +97,5 @@ if errors:
     for error in errors:
         print(f" - {error}", file=sys.stderr)
     raise SystemExit(1)
-print(f"FlatCMS FHSE payload validation OK: Core {core_version}, Modules 1.0.4, Backups 1.0.2, Languages 1.0.1, UpdateManager 0.4.8")
+print(f"FlatCMS FHSE payload validation OK: Core {core_version}, Modules 1.0.4, Backups 1.0.2, Languages 1.0.1, UpdateManager 0.4.9")
 PY
